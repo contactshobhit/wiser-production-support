@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import MetricsRow from './MetricsRow';
+import ActionsCell from './ActionsCell';
 import { getCriticalErrors, getPendingManualReview, getProcessingNow, getCompletedToday, filterPackets } from './processUtils';
 
 const processStages = [
@@ -166,6 +167,7 @@ export default function ProcessTracker() {
               <th scope="col" style={{ padding: '12px 16px', borderBottom: '1px solid #e0e0e0', borderRight: '1px solid #e0e0e0' }}>Current Stage</th>
               <th scope="col" style={{ padding: '12px 16px', borderBottom: '1px solid #e0e0e0', borderRight: '1px solid #e0e0e0' }}>Status</th>
               <th scope="col" style={{ padding: '12px 16px', borderBottom: '1px solid #e0e0e0' }}>Last Update</th>
+              <th scope="col" style={{ padding: '12px 16px', borderBottom: '1px solid #e0e0e0' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -189,6 +191,15 @@ export default function ProcessTracker() {
                 </td>
                 <td style={{ padding: '12px 16px', borderRight: '1px solid #f0f0f0' }}>{pkt.status}</td>
                 <td style={{ padding: '12px 16px' }}>{pkt.lastUpdate}</td>
+                <td style={{ padding: '12px 16px' }}>
+                  <ActionsCell
+                    packet={pkt}
+                    onRetry={(packet) => {/* TODO: implement retry */}}
+                    onView={(packet) => {/* TODO: implement view details */}}
+                    onOverride={(packet) => {/* TODO: implement override */}}
+                    onDownload={(packet) => {/* TODO: implement download */}}
+                  />
+                </td>
               </tr>
             ))}
           </tbody>
