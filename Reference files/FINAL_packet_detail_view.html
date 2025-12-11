@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WISeR Packet Detail View - Complete Packet Information</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+    
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: #3b82f6;
+      color: white;
+      padding: 8px 16px;
+      text-decoration: none;
+      font-weight: 600;
+      z-index: 9999;
+      border-radius: 0 0 4px 0;
+    }
+    
+    .skip-link:focus {
+      top: 0;
+    }
+    
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    [role="button"]:focus-visible,
+    [tabindex]:focus-visible {
+      outline: 3px solid #3b82f6;
+      outline-offset: 2px;
+    }
+    
+    button, a, [role="button"] {
+      min-height: 24px;
+      min-width: 24px;
+    }
+    
+    .text-gray-700 {
+      color: #374151 !important;
+    }
+    
+    .text-gray-600 {
+      color: #4b5563 !important;
+    }
+    
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    
+    *:focus-visible {
+      outline: 3px solid #3b82f6;
+      outline-offset: 2px;
+    }
+
+    .section-content {
+      max-height: 5000px;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+    }
+    
+    .section-content.collapsed {
+      max-height: 0;
+    }
+
+    .tab-button {
+      padding: 12px 24px;
+      border-bottom: 3px solid transparent;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .tab-button:hover {
+      background-color: #f3f4f6;
+    }
+
+    .tab-button.active {
+      border-bottom-color: #3b82f6;
+      color: #3b82f6;
+      background-color: #eff6ff;
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <div id="root"></div>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script type="text/babel">
+        const PacketDetailView = () => {
+          const [beneficiaryExpanded, setBeneficiaryExpanded] = React.useState(false);
+          const [providerExpanded, setProviderExpanded] = React.useState(false);
+          const [serviceExpanded, setServiceExpanded] = React.useState(false);
+          const [intakeExpanded, setIntakeExpanded] = React.useState(false);
+          const [activeTab, setActiveTab] = React.useState('validation');
+
+          const urlParams = new URLSearchParams(window.location.search);
+          const packetId = urlParams.get('id') || 'PKT-2025-001234';
+
+          // ALL 7 PACKETS FROM DASHBOARD - COMPLETE MATCHING DATA
+          const allPackets = {
+            'PKT-2025-001234': {
+              id: 'PKT-2025-001234',
+              receivedDate: 'Dec 4, 2025 at 2:30 PM',
+              currentStatus: 'Manual Review',
+              highLevelStatus: 'Intake Processing',
+              statusClass: 'status-processing',
+              statusIcon: '🔵',
+              daysInSystem: 0,
+              letterDelivered: null,
+              intakeComplete: true,
+              validationComplete: false,
+              clinicalReviewComplete: false,
+              deliveryComplete: false,
+              beneficiary: {
+                name: 'John Smith',
+                mbi: '1EG4-TE5-MK72',
+                dob: 'March 15, 1955',
+                age: 70,
+                gender: 'Male',
+                medicarePart: 'Part B',
+                address: '123 Main Street, Newark, NJ 07102',
+                phone: '(555) 123-4567',
+                altPhone: '(555) 987-6543',
+                source: 'Fax Submission',
+                validatedAt: 'Dec 4, 2:31 PM'
+              },
+              provider: {
+                renderingProvider: {
+                  name: 'ABC Medical Clinic',
+                  npi: '1234567890',
+                  npiType: 'Organization',
+                  taxId: '12-3456789',
+                  specialty: 'DME Supplier',
+                  taxonomyCode: '332B00000X',
+                  pecosStatus: 'Pending Validation'
+                },
+                practiceLocation: {
+                  address: '456 Healthcare Blvd, Suite 200',
+                  city: 'Newark, NJ 07103',
+                  phone: '(555) 234-5678',
+                  fax: '(555) 234-5679',
+                  email: 'admin@abcmedical.com'
+                },
+                goldCard: { status: false },
+                source: 'Fax Provider Data',
+                validatedAt: 'Pending'
+              },
+              serviceLines: [{
+                lineNumber: 1,
+                hcpcs: 'L0450',
+                description: 'TLSO, Flexible, Provides Trunk Support, Sacrococcygeal to T-9',
+                quantity: 1,
+                dos: 'December 1, 2025',
+                diagnosisCodes: [
+                  { type: 'Primary', code: 'M54.5', description: 'Low back pain' }
+                ],
+                renderingProvider: 'ABC Medical Clinic',
+                renderingNPI: '1234567890',
+                priorAuthRequired: true,
+                source: 'Fax Submission',
+                validatedAt: 'Dec 4, 2:33 PM'
+              }],
+              intake: {
+                channelType: 'Fax',
+                submissionId: 'FAX-2025-123456',
+                submitter: 'ABC Medical Clinic',
+                submitterNPI: '1234567890',
+                submissionDate: 'Dec 4, 2025 at 2:30:00 PM EST',
+                priority: 'Standard',
+                priorityIcon: '📄',
+                mac: 'Novitas Solutions (New Jersey)',
+                totalPages: 12,
+                reviewType: 'Field Correction',
+                assignedTo: 'Jane Reviewer'
+              }
+            },
+            'PKT-2025-001235': {
+              id: 'PKT-2025-001235',
+              receivedDate: 'Dec 4, 2025 at 3:00 PM',
+              currentStatus: 'Validating',
+              highLevelStatus: 'Intake Processing',
+              statusClass: 'status-processing',
+              statusIcon: '🔵',
+              daysInSystem: 0,
+              letterDelivered: null,
+              intakeComplete: true,
+              validationComplete: false,
+              clinicalReviewComplete: false,
+              deliveryComplete: false,
+              beneficiary: {
+                name: 'Mary Johnson',
+                mbi: '1AB2-CD3-EF45',
+                dob: 'June 22, 1960',
+                age: 65,
+                gender: 'Female',
+                medicarePart: 'Part B',
+                address: '789 Oak Avenue, Trenton, NJ 08608',
+                phone: '(555) 234-5678',
+                altPhone: '(555) 345-6789',
+                source: 'esMD Submission',
+                validatedAt: 'Validating...'
+              },
+              provider: {
+                renderingProvider: {
+                  name: 'XYZ Health',
+                  npi: '9876543210',
+                  npiType: 'Organization',
+                  taxId: '98-7654321',
+                  specialty: 'DME Supplier',
+                  taxonomyCode: '332B00000X',
+                  pecosStatus: 'Validating...'
+                },
+                practiceLocation: {
+                  address: '321 Medical Plaza, Suite 500',
+                  city: 'Trenton, NJ 08608',
+                  phone: '(555) 345-6789',
+                  fax: '(555) 345-6780',
+                  email: 'contact@xyzhealth.com'
+                },
+                goldCard: { status: false },
+                source: 'esMD Provider Registry',
+                validatedAt: 'Validating...'
+              },
+              serviceLines: [{
+                lineNumber: 1,
+                hcpcs: 'L0454',
+                description: 'TLSO, Flexible, Provides Trunk Support, with Rigid Anterior',
+                quantity: 1,
+                dos: 'December 3, 2025',
+                diagnosisCodes: [
+                  { type: 'Primary', code: 'M48.06', description: 'Spinal stenosis, lumbar region' }
+                ],
+                renderingProvider: 'XYZ Health',
+                renderingNPI: '9876543210',
+                priorAuthRequired: true,
+                source: 'esMD Submission',
+                validatedAt: 'Validating...'
+              }],
+              intake: {
+                channelType: 'esMD (Electronic)',
+                submissionId: 'esMD-2025-654321',
+                submitter: 'XYZ Health',
+                submitterNPI: '9876543210',
+                submissionDate: 'Dec 4, 2025 at 3:00:00 PM EST',
+                priority: 'Standard',
+                priorityIcon: '📄',
+                mac: 'Novitas Solutions (New Jersey)',
+                totalPages: 8,
+                assignedTo: 'Auto'
+              }
+            },
+            'PKT-2025-001236': {
+              id: 'PKT-2025-001236',
+              receivedDate: 'Dec 4, 2025 at 1:15 PM',
+              currentStatus: 'Case Created',
+              highLevelStatus: 'Clinical Review',
+              statusClass: 'status-processing',
+              statusIcon: '🔵',
+              daysInSystem: 0,
+              letterDelivered: null,
+              intakeComplete: true,
+              validationComplete: true,
+              clinicalReviewComplete: false,
+              deliveryComplete: false,
+              beneficiary: {
+                name: 'Robert Williams',
+                mbi: '1GH4-IJ5-KL67',
+                dob: 'January 10, 1958',
+                age: 67,
+                gender: 'Male',
+                medicarePart: 'Part B',
+                address: '456 Pine Street, Camden, NJ 08101',
+                phone: '(555) 456-7890',
+                altPhone: '(555) 567-8901',
+                source: 'Portal Submission',
+                validatedAt: 'Dec 4, 1:16 PM'
+              },
+              provider: {
+                renderingProvider: {
+                  name: 'City Orthopedics',
+                  npi: '5551234567',
+                  npiType: 'Organization',
+                  taxId: '55-1234567',
+                  specialty: 'Orthopedic Surgery',
+                  taxonomyCode: '207X00000X',
+                  pecosStatus: 'Active & Enrolled'
+                },
+                practiceLocation: {
+                  address: '654 Surgery Center Drive',
+                  city: 'Camden, NJ 08101',
+                  phone: '(555) 567-8901',
+                  fax: '(555) 567-8902',
+                  email: 'info@cityortho.com'
+                },
+                goldCard: { status: false },
+                source: 'Portal Provider Registry',
+                validatedAt: 'Dec 4, 1:17 PM'
+              },
+              serviceLines: [{
+                lineNumber: 1,
+                hcpcs: 'L0631',
+                description: 'Lumbar-Sacral Orthosis, Sagittal Control, with Rigid Anterior',
+                quantity: 1,
+                dos: 'December 3, 2025',
+                diagnosisCodes: [
+                  { type: 'Primary', code: 'M51.26', description: 'Other intervertebral disc displacement, lumbar region' }
+                ],
+                renderingProvider: 'City Orthopedics',
+                renderingNPI: '5551234567',
+                priorAuthRequired: true,
+                source: 'Portal Submission',
+                validatedAt: 'Dec 4, 1:18 PM'
+              }],
+              intake: {
+                channelType: 'Provider Portal',
+                submissionId: 'PORT-2025-111222',
+                submitter: 'City Orthopedics',
+                submitterNPI: '5551234567',
+                submissionDate: 'Dec 4, 2025 at 1:15:00 PM EST',
+                priority: 'Expedited',
+                priorityIcon: '⚡',
+                mac: 'Novitas Solutions (New Jersey)',
+                totalPages: 15,
+                assignedTo: 'Auto'
+              }
+            },
+            'PKT-2025-001237': {
+              id: 'PKT-2025-001237',
+              receivedDate: 'Dec 4, 2025 at 12:00 PM',
+              currentStatus: 'Dismissed',
+              highLevelStatus: 'Closed - Dismissed',
+              statusClass: 'status-complete',
+              statusIcon: '🔴',
+              daysInSystem: 0,
+              letterDelivered: 'Dec 4, 2025 at 12:15 PM',
+              dismissalReason: 'Ineligible beneficiary (MA enrolled)',
+              intakeComplete: true,
+              validationComplete: true,
+              clinicalReviewComplete: false,
+              deliveryComplete: true,
+              beneficiary: {
+                name: 'Sarah Davis',
+                mbi: '1MN4-OP5-QR89',
+                dob: 'July 8, 1962',
+                age: 63,
+                gender: 'Female',
+                medicarePart: 'Part B (MA Enrolled)',
+                address: '987 County Road, Jersey City, NJ 07302',
+                phone: '(555) 678-9012',
+                altPhone: '(555) 789-0123',
+                source: 'Fax Submission',
+                validatedAt: 'Dec 4, 12:02 PM',
+                eligibilityIssue: 'Medicare Advantage Enrolled - Not eligible for WISeR'
+              },
+              provider: {
+                renderingProvider: {
+                  name: 'County Medical',
+                  npi: '8887776655',
+                  npiType: 'Organization',
+                  taxId: '88-7776655',
+                  specialty: 'DME Supplier',
+                  taxonomyCode: '332B00000X',
+                  pecosStatus: 'Active & Enrolled'
+                },
+                practiceLocation: {
+                  address: '123 County Medical Plaza',
+                  city: 'Jersey City, NJ 07302',
+                  phone: '(555) 789-0123',
+                  fax: '(555) 890-1234',
+                  email: 'info@countymedical.com'
+                },
+                goldCard: { status: false },
+                source: 'Fax Provider Data',
+                validatedAt: 'Dec 4, 12:03 PM'
+              },
+              serviceLines: [{
+                lineNumber: 1,
+                hcpcs: 'L0450',
+                description: 'TLSO, Flexible, Provides Trunk Support, Sacrococcygeal to T-9',
+                quantity: 1,
+                dos: 'December 3, 2025',
+                diagnosisCodes: [
+                  { type: 'Primary', code: 'M54.5', description: 'Low back pain' }
+                ],
+                renderingProvider: 'County Medical',
+                renderingNPI: '8887776655',
+                priorAuthRequired: true,
+                source: 'Fax Submission',
+                validatedAt: 'Dec 4, 12:04 PM'
+              }],
+              intake: {
+                channelType: 'Fax',
+                submissionId: 'FAX-2025-777888',
+                submitter: 'County Medical',
+                submitterNPI: '8887776655',
+                submissionDate: 'Dec 4, 2025 at 12:00:00 PM EST',
+                priority: 'Standard',
+                priorityIcon: '📄',
+                mac: 'Novitas Solutions (New Jersey)',
+                totalPages: 10,
+                assignedTo: 'Auto'
+              }
+            },
+            'PKT-2025-001238': {
+              id: 'PKT-2025-001238',
+              receivedDate: 'Dec 4, 2025 at 11:30 AM',
+              currentStatus: 'Manual Review',
+              highLevelStatus: 'Intake Processing',
+              statusClass: 'status-processing',
+              statusIcon: '🔵',
+              daysInSystem: 0,
+              letterDelivered: null,
+              intakeComplete: true,
+              validationComplete: false,
+              clinicalReviewComplete: false,
+              deliveryComplete: false,
+              beneficiary: {
+                name: 'James Brown',
+                mbi: '1ST4-UV5-WX01',
+                dob: 'September 12, 1959',
+                age: 66,
+                gender: 'Male',
+                medicarePart: 'Part B',
+                address: '321 Valley Drive, Paterson, NJ 07501',
+                phone: '(555) 890-1234',
+                altPhone: '(555) 901-2345',
+                source: 'Mailroom Scan',
+                validatedAt: 'Dec 4, 11:32 AM'
+              },
+              provider: {
+                renderingProvider: {
+                  name: 'Valley Spine Center',
+                  npi: '4443332221',
+                  npiType: 'Organization',
+                  taxId: '44-4333222',
+                  specialty: 'Pain Management',
+                  taxonomyCode: '208VP0000X',
+                  pecosStatus: 'Pending Validation'
+                },
+                practiceLocation: {
+                  address: '789 Spine Treatment Plaza',
+                  city: 'Paterson, NJ 07501',
+                  phone: '(555) 901-2345',
+                  fax: '(555) 012-3456',
+                  email: 'contact@valleyspine.com'
+                },
+                goldCard: { status: false },
+                source: 'Mailroom Scan',
+                validatedAt: 'Pending'
+              },
+              serviceLines: [{
+                lineNumber: 1,
+                hcpcs: 'L0972',
+                description: 'LSO, Axillary-Lumbar, Anterior-Posterior Control with Rigid Anterior',
+                quantity: 1,
+                dos: 'December 3, 2025',
+                diagnosisCodes: [
+                  { type: 'Primary', code: 'M47.26', description: 'Other spondylosis with radiculopathy, lumbar region' }
+                ],
+                renderingProvider: 'Valley Spine Center',
+                renderingNPI: '4443332221',
+                priorAuthRequired: true,
+                source: 'Mailroom Scan',
+                validatedAt: 'Dec 4, 11:34 AM'
+              }],
+              intake: {
+                channelType: 'Mailroom',
+                submissionId: 'MAIL-2025-333444',
+                submitter: 'Valley Spine Center',
+                submitterNPI: '4443332221',
+                submissionDate: 'Dec 4, 2025 at 11:30:00 AM EST',
+                priority: 'Standard',
+                priorityIcon: '📄',
+                mac: 'Novitas Solutions (New Jersey)',
+                totalPages: 18,
+                reviewType: 'Document Classification',
+                assignedTo: 'John Reviewer'
+              }
+            },
+            'PKT-2025-001239': {
+              id: 'PKT-2025-001239',
+              receivedDate: 'Dec 3, 2025 at 9:45 AM',
+              currentStatus: 'Case Created',
+              highLevelStatus: 'Delivery In Progress',
+              statusClass: 'status-processing',
+              statusIcon: '🔵',
+              daysInSystem: 1,
+              letterDelivered: null,
+              intakeComplete: true,
+              validationComplete: true,
+              clinicalReviewComplete: true,
+              deliveryComplete: false,
+              beneficiary: {
+                name: 'Hemanth Pande',
+                mbi: '1YZ2-AB3-CD45',
+                dob: 'February 18, 1961',
+                age: 64,
+                gender: 'Male',
+                medicarePart: 'Part B',
+                address: '555 Metro Boulevard, Newark, NJ 07104',
+                phone: '(555) 012-3456',
+                altPhone: '(555) 123-4567',
+                source: 'esMD Submission',
+                validatedAt: 'Dec 3, 9:47 AM'
+              },
+              provider: {
+                renderingProvider: {
+                  name: 'Metro Health',
+                  npi: '7778889990',
+                  npiType: 'Organization',
+                  taxId: '77-7888999',
+                  specialty: 'Orthopedic Surgery',
+                  taxonomyCode: '207X00000X',
+                  pecosStatus: 'Active & Enrolled'
+                },
+                practiceLocation: {
+                  address: '888 Metropolitan Center',
+                  city: 'Newark, NJ 07104',
+                  phone: '(555) 123-4567',
+                  fax: '(555) 234-5678',
+                  email: 'info@metrohealth.com'
+                },
+                goldCard: { status: true, approvalRate: '96%', since: 'January 2024' },
+                source: 'esMD Provider Registry',
+                validatedAt: 'Dec 3, 9:48 AM'
+              },
+              serviceLines: [{
+                lineNumber: 1,
+                hcpcs: 'L1832',
+                description: 'Knee Orthosis, Adjustable Knee Joints, Pre-fabricated',
+                quantity: 1,
+                dos: 'December 2, 2025',
+                diagnosisCodes: [
+                  { type: 'Primary', code: 'M17.11', description: 'Unilateral primary osteoarthritis, right knee' }
+                ],
+                renderingProvider: 'Metro Health',
+                renderingNPI: '7778889990',
+                priorAuthRequired: true,
+                source: 'esMD Submission',
+                validatedAt: 'Dec 3, 9:49 AM'
+              }],
+              intake: {
+                channelType: 'esMD (Electronic)',
+                submissionId: 'esMD-2025-999888',
+                submitter: 'Metro Health',
+                submitterNPI: '7778889990',
+                submissionDate: 'Dec 3, 2025 at 9:45:00 AM EST',
+                priority: 'High',
+                priorityIcon: '⚡',
+                mac: 'Novitas Solutions (New Jersey)',
+                totalPages: 12,
+                assignedTo: 'Auto'
+              }
+            },
+            'PKT-2025-001240': {
+              id: 'PKT-2025-001240',
+              receivedDate: 'Dec 2, 2025 at 2:20 PM',
+              currentStatus: 'Case Created',
+              highLevelStatus: 'Closed - Delivered',
+              statusClass: 'status-complete',
+              statusIcon: '🟢',
+              daysInSystem: 2,
+              letterDelivered: 'Dec 2, 2025 at 4:45 PM',
+              intakeComplete: true,
+              validationComplete: true,
+              clinicalReviewComplete: true,
+              deliveryComplete: true,
+              beneficiary: {
+                name: 'Piyush Saxena',
+                mbi: '1EF2-GH3-IJ56',
+                dob: 'May 5, 1960',
+                age: 65,
+                gender: 'Male',
+                medicarePart: 'Part B',
+                address: '777 Ortho Lane, Trenton, NJ 08609',
+                phone: '(555) 234-5678',
+                altPhone: '(555) 345-6789',
+                source: 'Portal Submission',
+                validatedAt: 'Dec 2, 2:22 PM'
+              },
+              provider: {
+                renderingProvider: {
+                  name: 'Sunny Orthopaedic',
+                  npi: '3334445556',
+                  npiType: 'Organization',
+                  taxId: '33-3444555',
+                  specialty: 'Orthopedic Surgery',
+                  taxonomyCode: '207X00000X',
+                  pecosStatus: 'Active & Enrolled'
+                },
+                practiceLocation: {
+                  address: '999 Sunny Medical Plaza',
+                  city: 'Trenton, NJ 08609',
+                  phone: '(555) 345-6789',
+                  fax: '(555) 456-7890',
+                  email: 'contact@sunnyortho.com'
+                },
+                goldCard: { status: true, approvalRate: '93%', since: 'April 2024' },
+                source: 'Portal Provider Registry',
+                validatedAt: 'Dec 2, 2:23 PM'
+              },
+              serviceLines: [{
+                lineNumber: 1,
+                hcpcs: 'L0450',
+                description: 'TLSO, Flexible, Provides Trunk Support, Sacrococcygeal to T-9',
+                quantity: 1,
+                dos: 'December 1, 2025',
+                diagnosisCodes: [
+                  { type: 'Primary', code: 'M54.5', description: 'Low back pain' }
+                ],
+                renderingProvider: 'Sunny Orthopaedic',
+                renderingNPI: '3334445556',
+                priorAuthRequired: true,
+                source: 'Portal Submission',
+                validatedAt: 'Dec 2, 2:24 PM'
+              }],
+              intake: {
+                channelType: 'Provider Portal',
+                submissionId: 'PORT-2025-555666',
+                submitter: 'Sunny Orthopaedic',
+                submitterNPI: '3334445556',
+                submissionDate: 'Dec 2, 2025 at 2:20:00 PM EST',
+                priority: 'Medium',
+                priorityIcon: '📄',
+                mac: 'Novitas Solutions (New Jersey)',
+                totalPages: 14,
+                assignedTo: 'Auto'
+              }
+            }
+          };
+
+          const packet = allPackets[packetId] || allPackets['PKT-2025-001234'];
+
+          const ToggleButton = ({ expanded, setExpanded, label }) => (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+              aria-label={expanded ? `Collapse ${label}` : `Expand ${label}`}
+            >
+              <span aria-hidden="true">{expanded ? '▼' : '▶'}</span>
+              {expanded ? 'Collapse' : 'Expand'}
+            </button>
+          );
+
+          const TabButton = ({ id, label, icon, isActive, disabled = false }) => (
+            <button
+              onClick={() => !disabled && setActiveTab(id)}
+              className={`tab-button ${isActive ? 'active' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={disabled}
+              aria-label={label}
+            >
+              <span className="mr-2">{icon}</span>
+              {label}
+              {disabled && <span className="ml-2 text-xs">(Pending)</span>}
+            </button>
+          );
+
+          return (
+            <div className="min-h-screen bg-gray-50 p-6">
+              <header className="mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <a href="FINAL_packets_dashboard.html" className="text-blue-600 hover:text-blue-800 mb-2 inline-block">
+                      ← Back to Packets Dashboard
+                    </a>
+                    <h1 id="main-content" className="text-3xl font-bold text-gray-900">Packet Detail View</h1>
+                    <p className="text-gray-700 mt-1">Complete packet information and processing status</p>
+                  </div>
+                </div>
+              </header>
+
+              {/* Packet Summary Card */}
+              <div className={`rounded-lg shadow-lg p-6 mb-6 border-l-4 ${
+                packet.statusClass === 'status-complete' ? 
+                  (packet.currentStatus === 'Dismissed' ? 'bg-gradient-to-r from-red-50 to-pink-50 border-red-600' : 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-600') :
+                packet.statusClass === 'status-processing' ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-600' :
+                'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-600'
+              }`}>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">📦 Packet {packet.id}</h2>
+                    <div className="space-y-1 text-gray-700">
+                      <div>Received: {packet.receivedDate} via {packet.intake.channelType}</div>
+                      <div>Current Status: {packet.statusIcon} <span className="font-semibold">{packet.currentStatus}</span></div>
+                      {packet.dismissalReason && (
+                        <div className="text-red-700 font-medium">❌ Dismissal Reason: {packet.dismissalReason}</div>
+                      )}
+                      <div>Days in System: <span className="font-semibold">{packet.daysInSystem} day{packet.daysInSystem !== 1 ? 's' : ''}</span></div>
+                      {packet.letterDelivered && <div>Letter Delivered: {packet.letterDelivered}</div>}
+                      {!packet.letterDelivered && packet.currentStatus !== 'Intake Processing' && !packet.dismissalReason && (
+                        <div className="text-orange-700 font-medium">⏳ Determination pending</div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => window.location.reload()}
+                      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 font-semibold">
+                      🔄 Refresh Status
+                    </button>
+                  </div>
+                </div>
+
+                {/* Progress Indicators */}
+                <div className="mt-4 pt-4 border-t border-gray-300">
+                  <div className="flex items-center gap-2 text-sm">
+                    <div className={`flex items-center gap-1 px-3 py-1 rounded ${packet.intakeComplete ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
+                      {packet.intakeComplete ? '✅' : '⏳'} Intake
+                    </div>
+                    <div className={`flex items-center gap-1 px-3 py-1 rounded ${packet.validationComplete ? 'bg-green-100 text-green-800' : packet.intakeComplete ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'}`}>
+                      {packet.validationComplete ? '✅' : packet.intakeComplete ? '🔵' : '⏳'} Validation
+                    </div>
+                    <div className={`flex items-center gap-1 px-3 py-1 rounded ${
+                      packet.currentStatus === 'Dismissed' ? 'bg-red-100 text-red-800' :
+                      packet.clinicalReviewComplete ? 'bg-green-100 text-green-800' : 
+                      packet.validationComplete ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {packet.currentStatus === 'Dismissed' ? '❌' : packet.clinicalReviewComplete ? '✅' : packet.validationComplete ? '🔵' : '⏳'} Clinical Review
+                    </div>
+                    <div className={`flex items-center gap-1 px-3 py-1 rounded ${packet.deliveryComplete ? 'bg-green-100 text-green-800' : packet.clinicalReviewComplete ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'}`}>
+                      {packet.deliveryComplete ? '✅' : packet.clinicalReviewComplete ? '🔵' : '⏳'} Delivery
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* INTAKE METADATA */}
+              <div className="bg-white rounded-lg shadow mb-6 p-6 border-l-4 border-green-500">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">📋 INTAKE METADATA</h2>
+                <p className="text-gray-600 mb-4">Packet information collected at intake</p>
+
+                {/* Quick Summary - Always Visible */}
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 mb-4">
+                  <div className="grid grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <div className="text-gray-600">Patient</div>
+                      <div className="font-semibold text-gray-900">{packet.beneficiary.name}</div>
+                      <div className="text-gray-600 text-xs">{packet.beneficiary.mbi}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-600">Provider</div>
+                      <div className="font-semibold text-gray-900">{packet.provider.renderingProvider.name}</div>
+                      <div className="text-gray-600 text-xs">NPI: {packet.provider.renderingProvider.npi}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-600">Service</div>
+                      <div className="font-semibold text-gray-900">{packet.serviceLines[0].hcpcs}</div>
+                      <div className="text-gray-600 text-xs">DOS: {packet.serviceLines[0].dos}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-600">Intake</div>
+                      <div className="font-semibold text-gray-900">{packet.intake.channelType}</div>
+                      <div className="text-gray-600 text-xs">{packet.intake.priorityIcon} {packet.intake.priority}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Expandable Sections */}
+                <div className="space-y-4">
+                  {/* Beneficiary */}
+                  <div className="border-t pt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-lg font-bold text-gray-900">👤 Beneficiary Information</h3>
+                      <ToggleButton expanded={beneficiaryExpanded} setExpanded={setBeneficiaryExpanded} label="Beneficiary Information" />
+                    </div>
+                    
+                    <div className={`section-content ${!beneficiaryExpanded ? 'collapsed' : ''}`}>
+                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <div className="grid grid-cols-2 gap-4 mb-3">
+                          <div>
+                            <div className="text-sm text-gray-600">Name</div>
+                            <div className="text-base font-semibold text-gray-900">{packet.beneficiary.name}</div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-gray-600">MBI</div>
+                            <div className="text-base font-semibold text-gray-900">{packet.beneficiary.mbi}</div>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4 mb-3">
+                          <div>
+                            <div className="text-sm text-gray-600">Date of Birth</div>
+                            <div className="text-sm text-gray-900">{packet.beneficiary.dob} (Age: {packet.beneficiary.age})</div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-gray-600">Gender</div>
+                            <div className="text-sm text-gray-900">{packet.beneficiary.gender}</div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-gray-600">Medicare Part</div>
+                            <div className="text-sm text-gray-900">{packet.beneficiary.medicarePart}</div>
+                          </div>
+                        </div>
+                        <div className="mb-3">
+                          <div className="text-sm text-gray-600">Address</div>
+                          <div className="text-sm text-gray-900">{packet.beneficiary.address}</div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <div className="text-sm text-gray-600">Phone</div>
+                            <div className="text-sm text-gray-900">{packet.beneficiary.phone}</div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-gray-600">Alt Phone</div>
+                            <div className="text-sm text-gray-900">{packet.beneficiary.altPhone}</div>
+                          </div>
+                        </div>
+                        {packet.beneficiary.eligibilityIssue && (
+                          <div className="mt-3 pt-3 border-t border-red-200 bg-red-50 p-2 rounded">
+                            <div className="text-sm font-medium text-red-900">❌ Eligibility Issue: {packet.beneficiary.eligibilityIssue}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Provider */}
+                  <div className="border-t pt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-lg font-bold text-gray-900">🏥 Provider Information</h3>
+                      <ToggleButton expanded={providerExpanded} setExpanded={setProviderExpanded} label="Provider Information" />
+                    </div>
+                    
+                    <div className={`section-content ${!providerExpanded ? 'collapsed' : ''}`}>
+                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <div className="grid grid-cols-2 gap-4 mb-3">
+                          <div>
+                            <div className="text-sm text-gray-600">Rendering Provider</div>
+                            <div className="text-base font-semibold text-gray-900">{packet.provider.renderingProvider.name}</div>
+                            <div className="text-sm text-gray-600">NPI: {packet.provider.renderingProvider.npi} ({packet.provider.renderingProvider.npiType})</div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-gray-600">Specialty</div>
+                            <div className="text-sm text-gray-900">{packet.provider.renderingProvider.specialty}</div>
+                            <div className="text-sm text-gray-600">Tax ID: {packet.provider.renderingProvider.taxId}</div>
+                          </div>
+                        </div>
+                        <div className="border-t pt-3 mt-3">
+                          <div className="text-sm font-medium text-gray-700 mb-2">Practice Location</div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="col-span-2">
+                              <div className="text-sm text-gray-900">{packet.provider.practiceLocation.address}</div>
+                              <div className="text-sm text-gray-900">{packet.provider.practiceLocation.city}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-gray-600">Phone</div>
+                              <div className="text-sm text-gray-900">{packet.provider.practiceLocation.phone}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-gray-600">Fax (for delivery) ⭐</div>
+                              <div className="text-sm font-semibold text-gray-900">{packet.provider.practiceLocation.fax}</div>
+                            </div>
+                            <div className="col-span-2">
+                              <div className="text-sm text-gray-600">Email</div>
+                              <div className="text-sm text-gray-900">{packet.provider.practiceLocation.email}</div>
+                            </div>
+                          </div>
+                        </div>
+                        {packet.provider.goldCard.status && (
+                          <div className="border-t pt-3 mt-3 bg-yellow-50 p-2 rounded">
+                            <div className="text-sm font-medium text-yellow-900">⭐ Gold Card Status: Active ({packet.provider.goldCard.approvalRate} approval rate since {packet.provider.goldCard.since})</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Service Lines */}
+                  <div className="border-t pt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-lg font-bold text-gray-900">💊 Service Line Items</h3>
+                      <ToggleButton expanded={serviceExpanded} setExpanded={setServiceExpanded} label="Service Line Items" />
+                    </div>
+                    
+                    <div className={`section-content ${!serviceExpanded ? 'collapsed' : ''}`}>
+                      {packet.serviceLines.map((line, idx) => (
+                        <div key={idx} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                          <div className="mb-2">
+                            <div className="text-sm text-gray-600">HCPCS Code</div>
+                            <div className="text-lg font-semibold text-gray-900">{line.hcpcs}</div>
+                            <div className="text-sm text-gray-700">{line.description}</div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4 mb-2">
+                            <div>
+                              <div className="text-sm text-gray-600">Quantity</div>
+                              <div className="text-sm text-gray-900">{line.quantity} unit</div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-gray-600">Date of Service</div>
+                              <div className="text-sm text-gray-900">{line.dos}</div>
+                            </div>
+                          </div>
+                          <div className="mb-2">
+                            <div className="text-sm text-gray-600">Diagnosis Codes</div>
+                            {line.diagnosisCodes.map((dx, dxIdx) => (
+                              <div key={dxIdx} className="text-sm text-gray-700 ml-2">
+                                {dx.type}: <span className="font-medium">{dx.code}</span> ({dx.description})
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Intake Details */}
+                  <div className="border-t pt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-lg font-bold text-gray-900">📥 Intake Details</h3>
+                      <ToggleButton expanded={intakeExpanded} setExpanded={setIntakeExpanded} label="Intake Details" />
+                    </div>
+                    
+                    <div className={`section-content ${!intakeExpanded ? 'collapsed' : ''}`}>
+                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <div className="text-sm text-gray-600">Channel Type</div>
+                            <div className="text-sm text-gray-900">{packet.intake.channelType}</div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-gray-600">Submission ID</div>
+                            <div className="text-sm text-gray-900">{packet.intake.submissionId}</div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-gray-600">Submitter</div>
+                            <div className="text-sm text-gray-900">{packet.intake.submitter}</div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-gray-600">Priority</div>
+                            <div className="text-sm font-semibold text-orange-700">{packet.intake.priorityIcon} {packet.intake.priority}</div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-gray-600">MAC</div>
+                            <div className="text-sm text-gray-900">{packet.intake.mac}</div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-gray-600">Total Pages</div>
+                            <div className="text-sm text-gray-900">{packet.intake.totalPages} pages</div>
+                          </div>
+                          {packet.intake.assignedTo && (
+                            <div>
+                              <div className="text-sm text-gray-600">Assigned To</div>
+                              <div className="text-sm text-gray-900">{packet.intake.assignedTo}</div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* TABBED SECTION */}
+              <div className="bg-white rounded-lg shadow mb-6 border-l-4 border-blue-500">
+                <div className="flex border-b border-gray-200">
+                  <TabButton 
+                    id="validation" 
+                    label="Validation Results" 
+                    icon="✅" 
+                    isActive={activeTab === 'validation'}
+                    disabled={!packet.validationComplete}
+                  />
+                  <TabButton 
+                    id="clinical" 
+                    label="Clinical Review" 
+                    icon="👨‍⚕️" 
+                    isActive={activeTab === 'clinical'}
+                    disabled={!packet.clinicalReviewComplete && packet.currentStatus !== 'Dismissed'}
+                  />
+                  <TabButton 
+                    id="delivery" 
+                    label="Outbound Communication" 
+                    icon="📮" 
+                    isActive={activeTab === 'delivery'}
+                    disabled={!packet.deliveryComplete}
+                  />
+                  <TabButton 
+                    id="audit" 
+                    label="Audit Trail" 
+                    icon="📊" 
+                    isActive={activeTab === 'audit'}
+                  />
+                </div>
+
+                <div className="p-6">
+                  {activeTab === 'validation' && (
+                    <div>
+                      {!packet.validationComplete ? (
+                        <div className="text-center py-12 text-gray-500">
+                          <div className="text-4xl mb-3">⏳</div>
+                          <div className="text-lg font-medium">Validation in Progress</div>
+                          <div className="text-sm">Checking eligibility, provider status, and service coverage...</div>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-3">Validation Complete</h3>
+                            <p className="text-gray-600">All validation checks completed for packet {packet.id}</p>
+                          </div>
+                          {packet.dismissalReason ? (
+                            <div className="bg-red-50 rounded-lg p-4 border border-red-200">
+                              <div className="text-lg font-bold text-red-800 mb-2">❌ Eligibility: FAILED</div>
+                              <div className="text-sm text-red-700">{packet.beneficiary.eligibilityIssue}</div>
+                              <div className="mt-2 text-sm text-red-700">Packet dismissed: {packet.dismissalReason}</div>
+                            </div>
+                          ) : (
+                            <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                              <div className="text-lg font-bold text-green-800">✅ Eligibility: ELIGIBLE</div>
+                              <div className="text-lg font-bold text-green-800">✅ Provider: VALIDATED</div>
+                              <div className="text-lg font-bold text-green-800">✅ Coverage: COVERED</div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {activeTab === 'clinical' && (
+                    <div>
+                      {packet.currentStatus === 'Dismissed' ? (
+                        <div className="text-center py-12 text-gray-500">
+                          <div className="text-4xl mb-3">❌</div>
+                          <div className="text-lg font-medium">Packet Dismissed</div>
+                          <div className="text-sm">Clinical review not performed due to eligibility failure</div>
+                        </div>
+                      ) : !packet.clinicalReviewComplete ? (
+                        <div className="text-center py-12 text-gray-500">
+                          <div className="text-4xl mb-3">🔵</div>
+                          <div className="text-lg font-medium">Clinical Review in Progress</div>
+                          <div className="text-sm">Case assigned - Decision pending...</div>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-3">Clinical Review Complete</h3>
+                            <p className="text-gray-600">Decision made for packet {packet.id}</p>
+                          </div>
+                          <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                            <div className="text-lg font-bold text-green-800 mb-2">✅ APPROVED</div>
+                            <div className="text-sm text-gray-700">Prior authorization granted</div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {activeTab === 'delivery' && (
+                    <div>
+                      {!packet.deliveryComplete ? (
+                        <div className="text-center py-12 text-gray-500">
+                          <div className="text-4xl mb-3">📮</div>
+                          <div className="text-lg font-medium">Letter Delivery Pending</div>
+                          <div className="text-sm">Letter will be generated after clinical review...</div>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-3">Outbound Communication Complete</h3>
+                            <p className="text-gray-600">{packet.currentStatus === 'Dismissed' ? 'Dismissal' : 'Determination'} letter delivered for packet {packet.id}</p>
+                          </div>
+                          <div className={`rounded-lg p-4 border ${packet.currentStatus === 'Dismissed' ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
+                            <div className={`text-lg font-bold mb-2 ${packet.currentStatus === 'Dismissed' ? 'text-red-800' : 'text-green-800'}`}>
+                              {packet.currentStatus === 'Dismissed' ? '❌ DISMISSAL LETTER SENT' : '✅ DELIVERED'}
+                            </div>
+                            <div className="text-sm text-gray-700">Delivered: {packet.letterDelivered}</div>
+                            <div className="text-sm text-gray-700">Method: Fax to {packet.provider.practiceLocation.fax}</div>
+                            {packet.currentStatus === 'Dismissed' && (
+                              <div className="text-sm text-red-700 mt-2">Reason: {packet.dismissalReason}</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {activeTab === 'audit' && (
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-3">Complete Audit Trail</h3>
+                        <p className="text-gray-600">Full packet lifecycle for {packet.id}</p>
+                      </div>
+                      
+                      <div className="border-l-4 border-green-500 pl-4">
+                        <h4 className="text-lg font-bold text-gray-900 mb-2">📥 INTAKE PHASE</h4>
+                        <div className="space-y-2 text-sm">
+                          <div className="flex gap-3">
+                            <div className="text-gray-600 w-32">{packet.receivedDate.split(' at ')[1]}</div>
+                            <div className="font-medium text-gray-900">Packet received via {packet.intake.channelType}</div>
+                          </div>
+                          {packet.intakeComplete && (
+                            <div className="flex gap-3">
+                              <div className="text-gray-600 w-32">+ 1 minute</div>
+                              <div className="font-medium text-green-700">Intake processing completed ✅</div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {packet.validationComplete && (
+                        <div className={`border-l-4 pl-4 ${packet.dismissalReason ? 'border-red-500' : 'border-blue-500'}`}>
+                          <h4 className="text-lg font-bold text-gray-900 mb-2">
+                            {packet.dismissalReason ? '❌ VALIDATION PHASE (FAILED)' : '✅ VALIDATION PHASE'}
+                          </h4>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex gap-3">
+                              <div className="text-gray-600 w-32">+ 2 minutes</div>
+                              <div className={`font-medium ${packet.dismissalReason ? 'text-red-700' : 'text-green-700'}`}>
+                                {packet.dismissalReason ? `Eligibility check failed ❌ - ${packet.dismissalReason}` : 'Validation checks completed ✅'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {packet.clinicalReviewComplete && (
+                        <div className="border-l-4 border-purple-500 pl-4">
+                          <h4 className="text-lg font-bold text-gray-900 mb-2">👨‍⚕️ CLINICAL REVIEW PHASE</h4>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex gap-3">
+                              <div className="text-gray-600 w-32">Day {packet.daysInSystem || 1}</div>
+                              <div className="font-medium text-green-700">Clinical decision: APPROVED ✅</div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {packet.deliveryComplete && (
+                        <div className="border-l-4 border-orange-500 pl-4">
+                          <h4 className="text-lg font-bold text-gray-900 mb-2">📮 DELIVERY PHASE</h4>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex gap-3">
+                              <div className="text-gray-600 w-32">{packet.letterDelivered.split(' at ')[1]}</div>
+                              <div className="font-medium text-green-700">
+                                {packet.currentStatus === 'Dismissed' ? 'Dismissal letter delivered ✅' : 'Determination letter delivered ✅'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<PacketDetailView />);
+    </script>
+</body>
+</html>

@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WISeR - MD Review - Prior Authorization Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* ===== WCAG 2.2 ACCESSIBILITY STYLES ===== */
+    
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+    
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: #3b82f6;
+      color: white;
+      padding: 8px 16px;
+      text-decoration: none;
+      font-weight: 600;
+      z-index: 9999;
+      border-radius: 0 0 4px 0;
+    }
+    
+    .skip-link:focus {
+      top: 0;
+    }
+    
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    [role="button"]:focus-visible,
+    [tabindex]:focus-visible {
+      outline: 3px solid #3b82f6;
+      outline-offset: 2px;
+    }
+    
+    button, a, [role="button"] {
+      min-height: 24px;
+      min-width: 24px;
+    }
+    
+    .text-gray-700 {
+      color: #6b7280 !important;
+    }
+    
+    .text-gray-600 {
+      color: #6b7280 !important;
+    }
+    
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    
+    *:focus-visible {
+      outline: 3px solid #3b82f6;
+      outline-offset: 2px;
+    }
+  </style>
+
+</head>
+<body class="bg-gray-50">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <div id="root"></div>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script type="text/babel">
+        const MDReviewScreen = () => {
+          const [mdDecision, setMdDecision] = React.useState('');
+          const [mdFeedback, setMdFeedback] = React.useState('');
+          const [showConfirmDialog, setShowConfirmDialog] = React.useState(false);
+
+          // Get case ID from URL
+          const urlParams = new URLSearchParams(window.location.search);
+          const caseId = urlParams.get('caseId') || '098765432';
+
+          // Mock case data
+          const caseData = {
+            uniqueId: '098765432',
+            caseId: '01222025_098765432',
+            patientName: 'Jennifer Martinez',
+            memberId: '12',
+            dateOfBirth: '1968-05-14',
+            age: 56,
+            serviceType: 'Cervical Collar',
+            hcpcs: 'L0120',
+            diagnosisCodes: ['M54.2 - Cervicalgia', 'M50.20 - Other cervical disc displacement'],
+            providerName: 'Dr. Sarah Williams, Orthopedics',
+            providerNPI: '1234567890',
+            dateAdded: '2025-01-22',
+            daysInReview: 4,
+            priority: 'High',
+            expedited: true,
+            nurseReviewer: 'Sarah Wilson, RN',
+            nurseReviewDate: '2025-01-24',
+            nurseRecommendation: 'Deny',
+            nurseNotes: `After thorough review of submitted documentation:
+
+1. Documentation does NOT contain a written order prior to delivery (WOPD) - REQUIRED element missing
+2. While ICD-10 codes are valid for cervical conditions, the WOPD is a mandatory requirement per LCD L35113
+3. Medical records show cervicalgia but lack evidence of failed conservative treatment
+4. No documentation of 6-week trial of non-invasive methods (physical therapy, NSAIDs, activity modification)
+
+Per LCD criteria, WOPD is non-negotiable for DME approval. Without this documentation, the request does not meet medical necessity requirements.
+
+RECOMMENDATION: Deny - Missing required WOPD documentation`,
+            
+            decisionSupportAnswers: [
+              { question: 'Does the documentation contain a written order prior to delivery (WOPD)?', answer: 'No', critical: true },
+              { question: 'Does the WOPD document include required elements?', answer: 'N/A - No WOPD present', critical: true },
+              { question: 'Does the documentation have a valid ICD-10 code for cervical condition?', answer: 'Yes' },
+              { question: 'Was there a same/similar claim identified in past?', answer: 'No' },
+              { question: 'Does documentation indicate failed conservative treatment?', answer: 'No' },
+              { question: 'Do medical records meet timeliness standards (within 12 months)?', answer: 'Yes' },
+              { question: 'Does the DME written order have provider signature?', answer: 'N/A' }
+            ],
+
+            documentsReviewed: [
+              'Prior Authorization Request Form',
+              'Progress Notes (11/15/2024)',
+              'Radiology Report - Cervical Spine X-ray',
+              'Insurance Verification'
+            ]
+          };
+
+          const handleAgree = () => {
+            setMdDecision('agree');
+            setShowConfirmDialog(true);
+          };
+
+          const handleDisagree = () => {
+            setMdDecision('disagree');
+          };
+
+          const handleConfirmAgree = () => {
+            alert('MD agrees with nurse recommendation. Case moving to Letter Generation.');
+            window.location.href = `FINAL_clinical_letter_generation.html?caseId=${caseData.uniqueId}&decision=deny`;
+          };
+
+          const handleSubmitFeedback = () => {
+            if (!mdFeedback.trim()) {
+              alert('Please provide feedback for the nurse reviewer.');
+              return;
+            }
+            alert('Feedback submitted. Case returned to nurse queue for re-review.');
+            window.location.href = 'FINAL_clinical_review_dashboard.html';
+          };
+
+          const handleCancel = () => {
+            if (window.confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
+              window.location.href = 'FINAL_clinical_review_dashboard.html';
+            }
+          };
+
+          return (
+            <div className="min-h-screen bg-gray-50 p-6">
+              {/* Breadcrumb Navigation */}
+              <div className="mb-6">
+                <nav className="flex items-center space-x-2 text-sm">
+                  <a href="FINAL_clinical_review_dashboard.html" className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
+                    <span>←</span> Back to Clinical Review Dashboard
+                  </a>
+                  <span className="text-gray-600">/</span>
+                  <span className="text-gray-700">MD Review: {caseData.uniqueId}</span>
+                </nav>
+              </div>
+
+              {/* Header */}
+              <div className="bg-white rounded-lg shadow mb-6 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h1 id="main-content" className="text-2xl font-bold text-gray-900">MD Review</h1>
+                    <p className="text-gray-600 mt-1">Case {caseData.uniqueId} - {caseData.patientName}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {caseData.expedited && (
+                      <span className="px-3 py-1 rounded bg-orange-100 text-orange-800 border border-orange-300 text-sm font-semibold">
+                        ⚡ Expedited
+                      </span>
+                    )}
+                    <span className={`px-3 py-1 rounded text-sm font-medium ${
+                      caseData.priority === 'High' ? 'bg-red-100 text-red-800' :
+                      caseData.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {caseData.priority} Priority
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-purple-50 border-l-4 border-purple-500 p-4 rounded">
+                  <div className="flex items-start gap-3">
+                    <div className="text-2xl">👨‍⚕️</div>
+                    <div>
+                      <h3 className="font-bold text-purple-900">Nurse Recommendation: DENY</h3>
+                      <p className="text-sm text-purple-700 mt-1">
+                        Reviewed by {caseData.nurseReviewer} on {caseData.nurseReviewDate} 
+                        <span className="ml-2 text-purple-600">({caseData.daysInReview} days in review)</span>
+                      </p>
+                      <p className="text-sm text-purple-800 mt-2">
+                        As the reviewing MD, please confirm agreement with this recommendation or provide feedback to send back to the nurse for re-review.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                {/* Left Column - Case Information */}
+                <div className="space-y-6">
+                  {/* Patient Information */}
+                  <div className="bg-white rounded-lg shadow p-6">
+                    <h2 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">Patient Information</h2>
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Patient Name:</span>
+                        <span className="font-semibold text-gray-900">{caseData.patientName}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Member ID:</span>
+                        <span className="font-mono font-semibold">{caseData.memberId}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Date of Birth:</span>
+                        <span className="font-semibold">{caseData.dateOfBirth}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Age:</span>
+                        <span className="font-semibold">{caseData.age} years</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Service Information */}
+                  <div className="bg-white rounded-lg shadow p-6">
+                    <h2 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">Service Requested</h2>
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Service Type:</span>
+                        <span className="font-semibold text-gray-900">{caseData.serviceType}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">HCPCS Code:</span>
+                        <span className="font-mono font-semibold">{caseData.hcpcs}</span>
+                      </div>
+                      <div className="text-sm">
+                        <span className="text-gray-600 block mb-1">Diagnosis Codes:</span>
+                        {caseData.diagnosisCodes.map((code, idx) => (
+                          <div key={idx} className="font-semibold text-gray-900 ml-2">• {code}</div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Provider Information */}
+                  <div className="bg-white rounded-lg shadow p-6">
+                    <h2 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">Provider Information</h2>
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Provider:</span>
+                        <span className="font-semibold text-gray-900">{caseData.providerName}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">NPI:</span>
+                        <span className="font-mono font-semibold">{caseData.providerNPI}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Documents Reviewed */}
+                  <div className="bg-white rounded-lg shadow p-6">
+                    <h2 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">Documents Reviewed</h2>
+                    <div className="space-y-2">
+                      {caseData.documentsReviewed.map((doc, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-sm">
+                          <span className="text-green-600">✓</span>
+                          <span className="text-gray-700">{doc}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <button className="mt-4 text-blue-600 hover:text-blue-800 text-sm font-medium">
+                      View All Documents →
+                    </button>
+                  </div>
+                </div>
+
+                {/* Right Column - Nurse Review Details */}
+                <div className="space-y-6">
+                  {/* Nurse's Clinical Notes */}
+                  <div className="bg-white rounded-lg shadow p-6">
+                    <h2 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">Nurse Reviewer's Clinical Notes</h2>
+                    <div className="bg-gray-50 rounded p-4 text-sm text-gray-800 whitespace-pre-line font-mono leading-relaxed max-h-96 overflow-y-auto">
+                      {caseData.nurseNotes}
+                    </div>
+                  </div>
+
+                  {/* Decision Support Answers */}
+                  <div className="bg-white rounded-lg shadow p-6">
+                    <h2 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">Decision Support System Answers</h2>
+                    <div className="space-y-3">
+                      {caseData.decisionSupportAnswers.map((item, idx) => (
+                        <div key={idx} className={`p-3 rounded text-sm ${
+                          item.critical && item.answer.toLowerCase().includes('no') 
+                            ? 'bg-red-50 border border-red-200' 
+                            : 'bg-gray-50'
+                        }`}>
+                          <div className="font-medium text-gray-900 mb-1">{idx + 1}. {item.question}</div>
+                          <div className={`font-semibold ${
+                            item.critical && item.answer.toLowerCase().includes('no')
+                              ? 'text-red-700'
+                              : item.answer.toLowerCase() === 'yes'
+                              ? 'text-green-700'
+                              : 'text-gray-700'
+                          }`}>
+                            Answer: {item.answer}
+                            {item.critical && item.answer.toLowerCase().includes('no') && (
+                              <span className="ml-2 text-xs px-2 py-0.5 rounded bg-red-200 text-red-800">CRITICAL FAILURE</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* MD Decision Section */}
+                  <div className="bg-white rounded-lg shadow p-6">
+                    <h2 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">MD Decision</h2>
+                    
+                    {mdDecision === '' && (
+                      <div className="space-y-4">
+                        <p className="text-sm text-gray-700 bg-blue-50 border border-blue-200 rounded p-3">
+                          <strong>Action Required:</strong> Please review the nurse's recommendation and either agree to proceed with the denial letter, or disagree and provide feedback for re-review.
+                        </p>
+                        
+                        <div className="flex gap-3">
+                          <button
+                            onClick={handleAgree}
+                            className="flex-1 bg-green-600 text-white px-6 py-4 rounded hover:bg-green-700 font-semibold text-lg"
+                          >
+                            ✓ Agree with Nurse - Proceed to Letter
+                          </button>
+                          <button
+                            onClick={handleDisagree}
+                            className="flex-1 bg-red-600 text-white px-6 py-4 rounded hover:bg-red-700 font-semibold text-lg"
+                          >
+                            ✗ Disagree - Send Back to Nurse
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {mdDecision === 'disagree' && (
+                      <div className="space-y-4">
+                        <div className="bg-red-50 border border-red-200 rounded p-4">
+                          <h3 className="font-bold text-red-900 mb-2">Provide Feedback for Nurse Reviewer</h3>
+                          <p className="text-sm text-red-700 mb-3">
+                            Please explain why you disagree with the nurse's recommendation. Your feedback will be sent to {caseData.nurseReviewer} for re-review.
+                          </p>
+                          <textarea
+                            value={mdFeedback}
+                            onChange={(e) => setMdFeedback(e.target.value)}
+                            placeholder="Enter your clinical feedback here. Be specific about what should be reconsidered..."
+                            className="w-full border border-red-300 rounded px-3 py-2 h-40 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                          />
+                        </div>
+                        
+                        <div className="flex gap-3">
+                          <button
+                            onClick={handleSubmitFeedback}
+                            className="flex-1 bg-red-600 text-white px-6 py-3 rounded hover:bg-red-700 font-semibold"
+                          >
+                            Submit Feedback & Return to Nurse
+                          </button>
+                          <button
+                            onClick={() => setMdDecision('')}
+                            className="px-6 py-3 border border-gray-300 rounded hover:bg-gray-50"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Action Buttons */}
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={handleCancel}
+                  className="bg-gray-200 text-gray-700 px-6 py-3 rounded hover:bg-gray-300 font-semibold flex items-center gap-2"
+                >
+                  <span>←</span> Back to Dashboard
+                </button>
+              </div>
+
+              {/* Confirmation Dialog */}
+              {showConfirmDialog && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-lg shadow-xl p-6 max-w-md">
+                    <h3 className="text-xl font-bold text-gray-900 mb-4">Confirm MD Agreement</h3>
+                    <p className="text-gray-700 mb-6">
+                      You are agreeing with the nurse's recommendation to <strong>DENY</strong> this case. 
+                      The case will proceed to letter generation for a denial letter.
+                    </p>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={handleConfirmAgree}
+                        className="flex-1 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 font-semibold"
+                      >
+                        Confirm & Proceed
+                      </button>
+                      <button
+                        onClick={() => setShowConfirmDialog(false)}
+                        className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<MDReviewScreen />);
+    </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+import React, { useState } from 'react';
+import Header from './components/Header';
+import NavBar from './components/NavBar';
+import ApiHealthDashboard from './components/ApiHealthDashboard';
+import ProcessTracker from './components/ProcessTracker';
+
+function App() {
+  const [screen, setScreen] = useState('api');
+  let content;
+  if (screen === 'api') content = <ApiHealthDashboard />;
+  else if (screen === 'process') content = <ProcessTracker />;
+  // removed packet intake and outbound communication screens
+  else content = <div style={{ padding: 32, color: '#888' }}>Coming soon...</div>;
+  return (
+    <div style={{ fontFamily: 'Segoe UI, Arial, sans-serif', background: '#f5f7fa', minHeight: '100vh' }}>
+      <Header />
+      <NavBar current={screen} onNavigate={setScreen} />
+      <main style={{ maxWidth: 1100, margin: '32px auto', background: 'white', borderRadius: 12, boxShadow: '0 2px 12px rgba(0,0,0,0.06)', padding: 32 }}>
+        {content}
+      </main>
+    </div>
+  );
+}
+
+export default App;

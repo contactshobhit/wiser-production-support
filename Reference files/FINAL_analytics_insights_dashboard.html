@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WISeR - Analytics & Insights - Prior Authorization Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* ===== WCAG 2.2 ACCESSIBILITY STYLES ===== */
+    
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+    
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: #3b82f6;
+      color: white;
+      padding: 8px 16px;
+      text-decoration: none;
+      font-weight: 600;
+      z-index: 9999;
+      border-radius: 0 0 4px 0;
+    }
+    
+    .skip-link:focus {
+      top: 0;
+    }
+    
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    [role="button"]:focus-visible,
+    [tabindex]:focus-visible {
+      outline: 3px solid #3b82f6;
+      outline-offset: 2px;
+    }
+    
+    button, a, [role="button"] {
+      min-height: 24px;
+      min-width: 24px;
+    }
+    
+    .text-gray-700 {
+      color: #6b7280 !important;
+    }
+    
+    .text-gray-600 {
+      color: #6b7280 !important;
+    }
+    
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    
+    *:focus-visible {
+      outline: 3px solid #3b82f6;
+      outline-offset: 2px;
+    }
+  </style>
+
+</head>
+<body class="bg-gray-50">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <div id="root"></div>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script type="text/babel">
+        const AnalyticsInsightsDashboard = () => {
+          const [timeRange, setTimeRange] = React.useState('7d');
+
+          const formatNumber = (num) => {
+            return num.toLocaleString();
+          };
+
+          const formatDays = (days) => {
+            if (!days && days !== 0) return '-';
+            if (days < 1) return `${Math.round(days * 24)}h`;
+            return `${days.toFixed(1)}d`;
+          };
+
+          // Sample metrics
+          const metrics = {
+            totalProcessed: timeRange === '24h' ? 287 : timeRange === '7d' ? 1847 : 8234,
+            avgProcessingTime: 45,
+            manualReviewRate: 28.5,
+            dismissalRate: 12.3,
+            successRate: 59.2,
+            slaCompliance: 78.4
+          };
+
+          const volumeTrend = timeRange === '24h' ? 
+            [45, 52, 48, 61, 55, 58, 62, 59, 67, 71, 68, 75, 82, 78, 85, 89, 92, 88, 95, 91, 87, 83, 79, 76] :
+            timeRange === '7d' ?
+            [245, 278, 312, 289, 301, 287, 295] :
+            [1823, 1956, 2045, 1987, 2134, 2089, 2156, 2201, 2178, 2245, 2298, 2267, 2334, 2389, 2356, 2423, 2467, 2445, 2512, 2489, 2534, 2578, 2556, 2601, 2645, 2623, 2689, 2734, 2712, 2767];
+
+          const phasePerformance = [
+            { phase: 'Intake', current: 0.9, target: 2, trend: [1.2, 1.1, 1.0, 0.95, 0.9], color: 'amber' },
+            { phase: 'Clinical', current: 2.0, target: 3, trend: [2.4, 2.3, 2.2, 2.1, 2.0], color: 'purple' },
+            { phase: 'Delivery', current: 0.04, target: 0.5, trend: [0.06, 0.05, 0.045, 0.042, 0.04], color: 'orange' },
+            { phase: 'End-to-End', current: 2.94, target: 5, trend: [3.5, 3.3, 3.1, 3.0, 2.94], color: 'blue' }
+          ];
+
+          const channels = [
+            { channel: 'Fax', avgTime: 68, volume: 35, successRate: 71 },
+            { channel: 'Mailroom', avgTime: 48, volume: 22, successRate: 75 },
+            { channel: 'Portal', avgTime: 32, volume: 15, successRate: 88 },
+            { channel: 'esMD', avgTime: 25, volume: 48, successRate: 92 }
+          ];
+
+          const slaData = {
+            overall: 78.4,
+            byPhase: [
+              { phase: 'Intake', compliance: 82.5, target: 85 },
+              { phase: 'Clinical', compliance: 75.3, target: 80 },
+              { phase: 'Delivery', compliance: 92.1, target: 95 }
+            ],
+            trend: [72, 74, 76, 77, 78.4]
+          };
+
+          const agingBuckets = [
+            { bucket: '0-4h', count: 45, percentage: 40 },
+            { bucket: '4-8h', count: 28, percentage: 25 },
+            { bucket: '8-24h', count: 18, percentage: 16 },
+            { bucket: '1-2d', count: 12, percentage: 11 },
+            { bucket: '2-4d', count: 6, percentage: 5 },
+            { bucket: '4+d', count: 3, percentage: 3 }
+          ];
+
+          const dismissalReasons = [
+            { reason: 'Ineligible Beneficiary', count: 45, percentage: 38 },
+            { reason: 'Incomplete Documentation', count: 32, percentage: 27 },
+            { reason: 'Out of Scope Service', count: 24, percentage: 20 },
+            { reason: 'Provider Not Enrolled', count: 18, percentage: 15 }
+          ];
+
+          const providers = [
+            { provider: 'ABC Medical Clinic', totalCases: 145, dismissalRate: 8.3, avgTime: 2.5 },
+            { provider: 'XYZ Health Center', totalCases: 132, dismissalRate: 15.2, avgTime: 3.1 },
+            { provider: 'City Orthopedics', totalCases: 98, dismissalRate: 6.1, avgTime: 2.2 },
+            { provider: 'County Medical', totalCases: 87, dismissalRate: 22.4, avgTime: 3.8 }
+          ];
+
+          const serviceCodes = [
+            { code: 'L0450', description: 'LSO w/ Rigid Anterior', count: 234, avgTime: 2.3, dismissalRate: 9.4 },
+            { code: 'L0631', description: 'LSO Sagittal Control', count: 187, avgTime: 2.8, dismissalRate: 11.2 },
+            { code: 'L0972', description: 'TLSO w/ Interface', count: 156, avgTime: 3.1, dismissalRate: 14.1 },
+            { code: 'L1832', description: 'KO w/ Thigh & Calf', count: 98, avgTime: 2.6, dismissalRate: 8.7 }
+          ];
+
+          const SimpleTrendLine = ({ data, color = 'blue' }) => {
+            const maxValue = Math.max(...data);
+            return (
+              <div className="flex items-end justify-between h-20 gap-1">
+                {data.map((value, idx) => {
+                  const height = (value / maxValue) * 100;
+                  return (
+                    <div 
+                      key={idx}
+                      className={`flex-1 bg-${color}-500 rounded-t hover:bg-${color}-600 transition-all`}
+                      style={{ height: `${height}%` }}
+                      title={value.toString()}
+                    />
+                  );
+                })}
+              </div>
+            );
+          };
+
+          return (
+            <div className="min-h-screen bg-gray-50 p-6">
+              {/* Breadcrumb */}
+              <div className="mb-6">
+                <nav className="flex items-center space-x-2 text-sm">
+                  <a href="FINAL_packets_dashboard.html" className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1" aria-label="Return to main dashboard">
+                    <span>←</span> Back to Dashboard
+                  </a>
+                  <span className="text-gray-600">/</span>
+                  <span className="text-gray-700">Analytics & Insights</span>
+                </nav>
+              </div>
+
+              {/* Header with Time Range Selector */}
+              <div className="mb-6 flex items-center justify-between">
+                <div>
+                  <h1 id="main-content" className="text-3xl font-bold text-gray-900">Analytics & Insights Dashboard</h1>
+                  <p className="text-gray-600 mt-1">Strategic performance analysis, trends, and quality metrics for informed decision-making</p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setTimeRange('24h')}
+                    className={`px-4 py-2 rounded transition-colors ${
+                      timeRange === '24h' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 border hover:bg-gray-50'
+                    }`}
+                  >
+                    Last 24 Hours
+                  </button>
+                  <button
+                    onClick={() => setTimeRange('7d')}
+                    className={`px-4 py-2 rounded transition-colors ${
+                      timeRange === '7d' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 border hover:bg-gray-50'
+                    }`}
+                  >
+                    Last 7 Days
+                  </button>
+                  <button
+                    onClick={() => setTimeRange('30d')}
+                    className={`px-4 py-2 rounded transition-colors ${
+                      timeRange === '30d' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 border hover:bg-gray-50'
+                    }`}
+                  >
+                    Last 30 Days
+                  </button>
+                </div>
+              </div>
+
+              {/* Section 1: Volume & Throughput */}
+              <div className="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-4">📊 Volume & Throughput</h2>
+                
+                <div className="grid grid-cols-6 gap-4 mb-6">
+                  <div className="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-500">
+                    <div className="text-2xl font-bold text-blue-900">{formatNumber(metrics.totalProcessed)}</div>
+                    <div className="text-sm text-blue-700">Total Processed</div>
+                    <div className="text-xs text-blue-600 mt-1">Reached Closed state</div>
+                  </div>
+                  <div className="bg-purple-50 rounded-lg p-4 border-l-4 border-purple-500">
+                    <div className="text-2xl font-bold text-purple-900">{metrics.avgProcessingTime}m</div>
+                    <div className="text-sm text-purple-700">Avg Processing Time</div>
+                    <div className="text-xs text-purple-600 mt-1">Received → Closed</div>
+                  </div>
+                  <div className="bg-amber-50 rounded-lg p-4 border-l-4 border-amber-500">
+                    <div className="text-2xl font-bold text-amber-900">{metrics.manualReviewRate}%</div>
+                    <div className="text-sm text-amber-700">Manual Review Rate</div>
+                    <div className="text-xs text-amber-600 mt-1">Required human review</div>
+                  </div>
+                  <div className="bg-red-50 rounded-lg p-4 border-l-4 border-red-500">
+                    <div className="text-2xl font-bold text-red-900">{metrics.dismissalRate}%</div>
+                    <div className="text-sm text-red-700">Dismissal Rate</div>
+                    <div className="text-xs text-red-600 mt-1">Closed-Dismissed</div>
+                  </div>
+                  <div className="bg-green-50 rounded-lg p-4 border-l-4 border-green-500">
+                    <div className="text-2xl font-bold text-green-900">{metrics.successRate}%</div>
+                    <div className="text-sm text-green-700">Success Rate</div>
+                    <div className="text-xs text-green-600 mt-1">Closed-Delivered</div>
+                  </div>
+                  <div className="bg-indigo-50 rounded-lg p-4 border-l-4 border-indigo-500">
+                    <div className="text-2xl font-bold text-indigo-900">{metrics.slaCompliance}%</div>
+                    <div className="text-sm text-indigo-700">SLA Compliance</div>
+                    <div className="text-xs text-indigo-600 mt-1">Within target</div>
+                  </div>
+                </div>
+
+                <div className="border-t pt-4">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Volume Trend</h3>
+                  <SimpleTrendLine data={volumeTrend} color="blue" />
+                  <div className="flex justify-between text-xs text-gray-700 mt-2">
+                    <span>{timeRange === '24h' ? '12am' : timeRange === '7d' ? 'Mon' : 'Day 1'}</span>
+                    <span>{timeRange === '24h' ? 'Now' : timeRange === '7d' ? 'Sun' : 'Day 30'}</span>
+                  </div>
+                  <p className="text-xs text-gray-700 mt-2 text-center">
+                    <strong>Metrics Definition:</strong> Success Rate = Closed-Delivered / Total Processed | Dismissal Rate = Closed-Dismissed / Total Processed | Manual Review Rate = Cases requiring human review / Total Received
+                  </p>
+                </div>
+              </div>
+
+              {/* Section 2: Performance by Phase */}
+              <div className="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-4">⏱️ Performance by Phase Trends</h2>
+                
+                <div className="grid grid-cols-4 gap-4 mb-4">
+                  {phasePerformance.map((item, idx) => (
+                    <div key={idx} className={`bg-${item.color}-50 rounded-lg p-4 border border-${item.color}-200`}>
+                      <div className="text-sm text-gray-600 mb-1">{item.phase}</div>
+                      <div className={`text-2xl font-bold text-${item.color}-900`}>
+                        {formatDays(item.current)}
+                      </div>
+                      <div className="text-xs text-gray-700 mt-1">
+                        Target: {formatDays(item.target)}
+                      </div>
+                      <div className={`text-xs font-semibold mt-2 ${item.current <= item.target ? 'text-green-600' : 'text-red-600'}`}>
+                        {item.current <= item.target ? '✓ Within target' : '⚠️ Above target'}
+                      </div>
+                      <div className="mt-3">
+                        <SimpleTrendLine data={item.trend} color={item.color} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <p className="text-xs text-gray-700 text-center">
+                  <strong>Metrics Definition:</strong> Average time from packet received to completion of each phase. Intake = Received → Case Created | Clinical = Case Created → Completed | Delivery = Completed → Sent | End-to-End = Received → Closed
+                </p>
+              </div>
+
+              {/* Section 3: Channel Performance */}
+              <div className="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-4">📡 Channel Performance Comparison</h2>
+                
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Average Processing Time</h3>
+                    <div className="space-y-3">
+                      {channels.map((channel, idx) => (
+                        <div key={idx}>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="font-medium text-gray-700">{channel.channel}</span>
+                            <span className="text-gray-600">{channel.avgTime} min</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-6">
+                            <div 
+                              className="bg-blue-500 h-6 rounded-full flex items-center justify-end px-2"
+                              style={{ width: `${(channel.avgTime / 80) * 100}%` }}
+                            >
+                              <span className="text-xs text-white font-semibold">{channel.avgTime}m</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Channel Metrics</h3>
+                    <div className="space-y-3">
+                      {channels.map((channel, idx) => (
+                        <div key={idx} className="border rounded-lg p-3 bg-gray-50">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="font-semibold text-gray-900">{channel.channel}</span>
+                            <span className={`px-2 py-1 rounded text-xs ${channel.successRate > 85 ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
+                              {channel.successRate}% success
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                              <span className="text-gray-700">Volume:</span>
+                              <span className="font-medium text-gray-900 ml-1">{channel.volume} cases</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-700">Avg Time:</span>
+                              <span className="font-medium text-gray-900 ml-1">{channel.avgTime} min</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                <p className="text-xs text-gray-700 mt-4 text-center">
+                  <strong>Metrics Definition:</strong> Avg Time = From packet received to closed state (Delivered or Dismissed), grouped by intake channel | Success Rate = % reaching Closed-Delivered per channel
+                </p>
+              </div>
+
+              {/* Section 4: SLA Compliance */}
+              <div className="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-4">🎯 SLA Compliance Tracking</h2>
+                
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Overall Compliance Trend</h3>
+                    <div className="bg-indigo-50 rounded-lg p-4 border border-indigo-200 mb-4">
+                      <div className="text-3xl font-bold text-indigo-900">{slaData.overall}%</div>
+                      <div className="text-sm text-indigo-700">Current SLA Compliance</div>
+                    </div>
+                    <SimpleTrendLine data={slaData.trend} color="indigo" />
+                    <div className="flex justify-between text-xs text-gray-700 mt-2">
+                      <span>5 periods ago</span>
+                      <span>Now</span>
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Compliance by Phase</h3>
+                    <div className="space-y-4">
+                      {slaData.byPhase.map((phase, idx) => (
+                        <div key={idx}>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="font-medium text-gray-700">{phase.phase}</span>
+                            <span className={phase.compliance >= phase.target ? 'text-green-600' : 'text-red-600'}>
+                              {phase.compliance}% / {phase.target}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-4 relative">
+                            <div 
+                              className={`${phase.compliance >= phase.target ? 'bg-green-500' : 'bg-red-500'} h-4 rounded-full`}
+                              style={{ width: `${phase.compliance}%` }}
+                            />
+                            <div 
+                              className="absolute top-0 h-4 border-r-2 border-gray-600"
+                              style={{ left: `${phase.target}%` }}
+                              title={`Target: ${phase.target}%`}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                <p className="text-xs text-gray-700 mt-4 text-center">
+                  <strong>Metrics Definition:</strong> SLA Compliance = % of cases completing within target time | Intake Target: 2d | Clinical Target: 3d | Delivery Target: 12h | Overall = Weighted average across all phases
+                </p>
+              </div>
+
+              {/* Section 5: Aging Distribution */}
+              <div className="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-4">🕐 Aging Distribution Histogram</h2>
+                
+                <div className="space-y-3">
+                  {agingBuckets.map((bucket, idx) => (
+                    <div key={idx}>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="font-medium text-gray-700 w-16">{bucket.bucket}</span>
+                        <span className="text-gray-600">{bucket.count} cases ({bucket.percentage}%)</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-8">
+                        <div 
+                          className={`${bucket.bucket.includes('4+d') ? 'bg-red-500' : bucket.bucket.includes('2-4d') ? 'bg-amber-500' : 'bg-green-500'} h-8 rounded-full flex items-center justify-end px-3`}
+                          style={{ width: `${bucket.percentage * 2.5}%` }}
+                        >
+                          <span className="text-sm text-white font-semibold">{bucket.count}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded">
+                  <p className="text-sm text-red-800">
+                    <strong>⚠️ Critical Alert:</strong> 3 cases aging beyond 4 days require immediate attention
+                  </p>
+                </div>
+                
+                <p className="text-xs text-gray-700 mt-4 text-center">
+                  <strong>Metrics Definition:</strong> Aging = Time since packet received for cases NOT yet closed | Distribution shows how many active cases are in each age bucket | Green (0-8h) = Healthy | Amber (8h-2d) = Watch | Red (2d+) = Critical
+                </p>
+              </div>
+
+              {/* Section 6: Quality Metrics */}
+              <div className="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-4">✨ Quality Metrics & Dismissal Analysis</h2>
+                
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Overall Quality Rates</h3>
+                    <div className="space-y-4">
+                      {[
+                        { label: 'Success Rate', value: metrics.successRate, color: 'green' },
+                        { label: 'Manual Review Rate', value: metrics.manualReviewRate, color: 'amber' },
+                        { label: 'Dismissal Rate', value: metrics.dismissalRate, color: 'red' }
+                      ].map((metric, idx) => (
+                        <div key={idx} className={`bg-${metric.color}-50 rounded-lg p-4 border border-${metric.color}-200`}>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-700">{metric.label}</span>
+                            <span className={`text-2xl font-bold text-${metric.color}-900`}>{metric.value}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                            <div 
+                              className={`bg-${metric.color}-500 h-2 rounded-full`}
+                              style={{ width: `${metric.value}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Dismissal Reasons Breakdown</h3>
+                    <div className="space-y-3">
+                      {dismissalReasons.map((reason, idx) => (
+                        <div key={idx}>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="font-medium text-gray-700">{reason.reason}</span>
+                            <span className="text-gray-600">{reason.count} ({reason.percentage}%)</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-6">
+                            <div 
+                              className="bg-red-500 h-6 rounded-full"
+                              style={{ width: `${reason.percentage * 2.5}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                <p className="text-xs text-gray-700 mt-4 text-center">
+                  <strong>Metrics Definition:</strong> Success Rate = Closed-Delivered / Total Closed | Dismissal Rate = Closed-Dismissed / Total Closed | Manual Review Rate = Cases requiring manual review / Total Received | Dismissal Reasons = Breakdown of why cases were dismissed
+                </p>
+              </div>
+
+              {/* Section 7: Provider Performance */}
+              <div className="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-4">🏥 Provider Performance Analysis</h2>
+                
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                  <caption class="sr-only">Data table</caption>
+                  <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Provider</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Total Cases</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Dismissal Rate</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Avg Processing Time</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Performance</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {providers.map((provider, idx) => (
+                        <tr key={idx} className="hover:bg-gray-50">
+                          <td className="px-4 py-4 text-sm font-medium text-gray-900">{provider.provider}</td>
+                          <td className="px-4 py-4 text-sm text-gray-600">{provider.totalCases}</td>
+                          <td className="px-4 py-4 text-sm">
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              provider.dismissalRate < 10 ? 'bg-green-100 text-green-800' :
+                              provider.dismissalRate < 15 ? 'bg-amber-100 text-amber-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {provider.dismissalRate}%
+                            </span>
+                          </td>
+                          <td className="px-4 py-4 text-sm text-gray-600">{provider.avgTime} days</td>
+                          <td className="px-4 py-4">
+                            <div className="flex items-center gap-2">
+                              {provider.dismissalRate < 10 && provider.avgTime < 3 && (
+                                <span className="text-green-600 text-sm">⭐ Excellent</span>
+                              )}
+                              {provider.dismissalRate >= 10 && provider.dismissalRate < 15 && (
+                                <span className="text-amber-600 text-sm">⚠️ Needs Improvement</span>
+                              )}
+                              {provider.dismissalRate >= 15 && (
+                                <span className="text-red-600 text-sm">🔴 High Risk</span>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                <p className="text-xs text-gray-700 mt-4 text-center">
+                  <strong>Metrics Definition:</strong> Dismissal Rate = Provider's Closed-Dismissed / Provider's Total Cases | Avg Time = Provider's avg time from received to closed | Performance = Green: &lt;10% dismissal & &lt;3d avg | Amber: 10-15% dismissal | Red: &gt;15% dismissal
+                </p>
+              </div>
+
+              {/* Section 8: Service Code Analysis */}
+              <div className="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-4">🔢 Service Code Analysis</h2>
+                
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">HCPCS Code</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Description</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Volume</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Avg Time</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Dismissal Rate</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Complexity</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {serviceCodes.map((service, idx) => (
+                        <tr key={idx} className="hover:bg-gray-50">
+                          <td className="px-4 py-4 text-sm font-medium text-blue-600">{service.code}</td>
+                          <td className="px-4 py-4 text-sm text-gray-900">{service.description}</td>
+                          <td className="px-4 py-4 text-sm text-gray-600">{service.count} cases</td>
+                          <td className="px-4 py-4 text-sm text-gray-600">{service.avgTime} days</td>
+                          <td className="px-4 py-4 text-sm">
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              service.dismissalRate < 10 ? 'bg-green-100 text-green-800' :
+                              service.dismissalRate < 13 ? 'bg-amber-100 text-amber-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {service.dismissalRate}%
+                            </span>
+                          </td>
+                          <td className="px-4 py-4">
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              service.avgTime < 2.5 ? 'bg-green-100 text-green-800' :
+                              service.avgTime < 3 ? 'bg-amber-100 text-amber-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {service.avgTime < 2.5 ? 'Low' : service.avgTime < 3 ? 'Medium' : 'High'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                <p className="text-xs text-gray-700 mt-4 text-center">
+                  <strong>Metrics Definition:</strong> Avg Time = Service code's avg from received to closed | Dismissal Rate = Service code's Closed-Dismissed / Total | Complexity = Based on avg processing time: Low (&lt;2.5d) | Medium (2.5-3d) | High (&gt;3d)
+                </p>
+              </div>
+
+              {/* Back Navigation */}
+              <div className="mt-6 flex justify-between items-center">
+                <a 
+                  href="FINAL_packets_dashboard.html"
+                  className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  <span>←</span> Back to Main Dashboard
+                </a>
+                <a 
+                  href="FINAL_analytics_dashboard.html"
+                  className="inline-flex items-center gap-2 text-amber-600 hover:text-amber-800 font-medium"
+                >
+                  Switch to Aging & Operations Dashboard <span>→</span>
+                </a>
+              </div>
+            </div>
+          );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<AnalyticsInsightsDashboard />);
+    </script>
+</body>
+</html>

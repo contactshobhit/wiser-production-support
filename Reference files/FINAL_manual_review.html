@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WISeR - Manual Review - Prior Authorization Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* ===== WCAG 2.2 ACCESSIBILITY STYLES ===== */
+    
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+    
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: #3b82f6;
+      color: white;
+      padding: 8px 16px;
+      text-decoration: none;
+      font-weight: 600;
+      z-index: 9999;
+      border-radius: 0 0 4px 0;
+    }
+    
+    .skip-link:focus {
+      top: 0;
+    }
+    
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    [role="button"]:focus-visible,
+    [tabindex]:focus-visible {
+      outline: 3px solid #3b82f6;
+      outline-offset: 2px;
+    }
+    
+    button, a, [role="button"] {
+      min-height: 24px;
+      min-width: 24px;
+    }
+    
+    .text-gray-700 {
+      color: #6b7280 !important;
+    }
+    
+    .text-gray-600 {
+      color: #6b7280 !important;
+    }
+    
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    
+    *:focus-visible {
+      outline: 3px solid #3b82f6;
+      outline-offset: 2px;
+    }
+  </style>
+
+</head>
+<body class="bg-gray-50">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <div id="root"></div>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script type="text/babel">
+        const ManualReviewScreen = () => {
+          // Get parameters from URL
+          const urlParams = new URLSearchParams(window.location.search);
+          const packetId = urlParams.get('id') || 'PKT-2025-001234';
+          const initialType = urlParams.get('type') || 'fields';
+          
+          const [reviewType, setReviewType] = React.useState(initialType);
+          const [formData, setFormData] = React.useState({
+            mbi: '1EG4TE5MK72',
+            patientFirstName: 'John',
+            patientLastName: 'Smlth',
+            patientDOB: '1955-03-15',
+            npi: '123456789',
+            providerName: 'ABC Medical Clinic',
+            providerTaxId: '',
+            providerFax: '(555) 123-4568',
+            hcpcs: 'L0450',
+            diagnosisCode: 'M54.5',
+            serviceDate: '2025-12-01'
+          });
+
+          const fieldIssues = {
+            mbi: { hasIssue: false, reason: '', confidence: 95 },
+            patientFirstName: { hasIssue: false, reason: '', confidence: 92 },
+            patientLastName: { hasIssue: true, reason: 'Low OCR confidence (70%)', confidence: 70 },
+            patientDOB: { hasIssue: false, reason: '', confidence: 88 },
+            npi: { hasIssue: true, reason: 'Low OCR confidence (55%)', confidence: 55 },
+            providerName: { hasIssue: false, reason: '', confidence: 85 },
+            providerTaxId: { hasIssue: true, reason: 'Field missing - not found in document', confidence: 0 },
+            providerFax: { hasIssue: true, reason: 'Low OCR confidence (62%)', confidence: 62 },
+            hcpcs: { hasIssue: false, reason: '', confidence: 90 },
+            diagnosisCode: { hasIssue: false, reason: '', confidence: 88 },
+            serviceDate: { hasIssue: false, reason: '', confidence: 92 }
+          };
+
+          const handleFieldChange = (field, value) => {
+            setFormData({...formData, [field]: value});
+          };
+
+          const handleSubmitCorrection = () => {
+            alert('Corrections submitted. Resuming workflow to Classification/Completeness stage.');
+            window.location.href = 'FINAL_packets_dashboard.html';
+          };
+
+          const handleReclassify = (type) => {
+            alert(`Document reclassified as: ${type}`);
+            window.location.href = 'FINAL_packets_dashboard.html';
+          };
+
+          const handleArchive = (reason) => {
+            alert(`Document archived. Reason: ${reason}`);
+            window.location.href = 'FINAL_packets_dashboard.html';
+          };
+
+          const issueCount = Object.values(fieldIssues).filter(f => f.hasIssue).length;
+
+          return (
+            <div className="min-h-screen bg-gray-50 p-6">
+              {/* Breadcrumb Navigation */}
+              <div className="mb-6">
+                <nav className="flex items-center space-x-2 text-sm">
+                  <a href="FINAL_packets_dashboard.html" className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1" aria-label="Return to main dashboard">
+                    <span>←</span> Back to Dashboard
+                  </a>
+                  <span className="text-gray-600">/</span>
+                  <span className="text-gray-700">Manual Review: {packetId}</span>
+                </nav>
+              </div>
+
+              {/* Header */}
+              <div className="bg-white rounded-lg shadow mb-6 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h1 id="main-content" className="text-2xl font-bold text-gray-900">Manual Review Queue</h1>
+                    <p className="text-gray-600 mt-1">
+                      Packet {packetId} | Source: Fax | Received: 2025-12-04 14:30
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setReviewType('fields')}
+                      className={`px-4 py-2 rounded flex items-center gap-2 transition-colors ${
+                        reviewType === 'fields' 
+                          ? 'bg-blue-600 text-white' 
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      <span>📝</span>
+                      Field Correction
+                      {issueCount > 0 && (
+                        <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                          {issueCount}
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setReviewType('classification')}
+                      className={`px-4 py-2 rounded flex items-center gap-2 transition-colors ${
+                        reviewType === 'classification' 
+                          ? 'bg-blue-600 text-white' 
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      <span aria-hidden="true">📋</span>
+                      Document Classification
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 bg-amber-50 border-l-4 border-amber-500 p-3 rounded">
+                  <svg className="w-5 h-5 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" />
+                  </svg>
+                  <span className="font-semibold text-amber-900">Workflow Paused</span>
+                  <span className="text-amber-700">- Awaiting human decision to resume processing</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                {/* Left Side - Document Viewer */}
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h2 className="text-lg font-bold text-gray-900 mb-4">Original Document</h2>
+                  
+                  <div className="border-2 border-gray-300 rounded-lg p-4 bg-gray-50 mb-4" style={{height: '600px'}}>
+                    <div className="text-center text-sm font-mono bg-white p-6 rounded shadow-inner h-full overflow-auto">
+                      <div className="text-left">
+                        <p className="font-bold mb-4">PRIOR AUTHORIZATION REQUEST FORM</p>
+                        <p className="mb-2">Date: 12/01/2025</p>
+                        <p className="mb-4">Fax From: (555) 123-4567</p>
+                        
+                        <div className="border-t pt-4 mt-4">
+                          <p className="font-semibold mb-2">PATIENT INFORMATION:</p>
+                          <p>Name: John Smlth</p>
+                          <p>DOB: 03/15/1955</p>
+                          <p>MBI: 1EG4 TE5 MK72</p>
+                        </div>
+                        
+                        <div className="border-t pt-4 mt-4">
+                          <p className="font-semibold mb-2">PROVIDER INFORMATION:</p>
+                          <p>Provider: ABC Medical Clinic</p>
+                          <p>NPI: 123456789</p>
+                          <p>Phone: (555) 123-4567</p>
+                          <p className="text-xs italic text-gray-700">Tax ID: [Field appears blank]</p>
+                        </div>
+                        
+                        <div className="border-t pt-4 mt-4">
+                          <p className="font-semibold mb-2">REQUESTED SERVICE:</p>
+                          <p>HCPCS: L0450</p>
+                          <p>Description: Lumbar-Sacral Orthosis</p>
+                          <p>Diagnosis: M54.5 - Low back pain</p>
+                          <p>Service Date: 12/01/2025</p>
+                        </div>
+                        
+                        <div className="border-t pt-4 mt-4">
+                          <p className="font-semibold mb-2">CLINICAL NOTES:</p>
+                          <p className="text-xs italic">[Handwritten notes - partially illegible]</p>
+                          <p className="text-xs">Patient presents with chronic low back pain...</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
+                      Zoom In
+                    </button>
+                    <button className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
+                      Zoom Out
+                    </button>
+                    <button className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
+                      Rotate
+                    </button>
+                  </div>
+                </div>
+
+                {/* Right Side - Review Interface */}
+                <div className="bg-white rounded-lg shadow p-6">
+                  {reviewType === 'fields' && (
+                    <>
+                      <h2 className="text-lg font-bold text-gray-900 mb-4">
+                        Field Correction
+                      </h2>
+                      
+                      <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
+                        <p className="text-sm text-blue-900">
+                          <strong>Issues Found:</strong> {issueCount} field(s) need attention - either low OCR confidence or missing from document.
+                        </p>
+                      </div>
+
+                      <div className="space-y-4 mb-6 max-h-[500px] overflow-y-auto pr-2">
+                        
+                        {/* Beneficiary Section */}
+                        <div className="bg-gray-50 p-3 rounded">
+                          <h3 className="font-semibold text-gray-900 mb-3">Beneficiary Information</h3>
+                          
+                          <div className="mb-3">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Medicare Beneficiary Identifier (MBI) *
+                              {fieldIssues.mbi.hasIssue ? (
+                                <span className="ml-2 text-xs px-2 py-1 rounded bg-red-100 text-red-800">
+                                  {fieldIssues.mbi.reason}
+                                </span>
+                              ) : (
+                                <span className="ml-2 text-xs px-2 py-1 rounded bg-green-100 text-green-800">
+                                  ✓ {fieldIssues.mbi.confidence}%
+                                </span>
+                              )}
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.mbi}
+                              onChange={(e) => handleFieldChange('mbi', e.target.value)}
+                              className={`w-full border rounded px-3 py-2 ${
+                                fieldIssues.mbi.hasIssue ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                              }`}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3 mb-3">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                First Name *
+                                {fieldIssues.patientFirstName.hasIssue ? (
+                                  <span className="ml-2 text-xs px-2 py-1 rounded bg-red-100 text-red-800">
+                                    {fieldIssues.patientFirstName.reason}
+                                  </span>
+                                ) : (
+                                  <span className="ml-2 text-xs px-2 py-1 rounded bg-green-100 text-green-800">
+                                    ✓ {fieldIssues.patientFirstName.confidence}%
+                                  </span>
+                                )}
+                              </label>
+                              <input
+                                type="text"
+                                value={formData.patientFirstName}
+                                onChange={(e) => handleFieldChange('patientFirstName', e.target.value)}
+                                className={`w-full border rounded px-3 py-2 ${
+                                  fieldIssues.patientFirstName.hasIssue ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                                }`}
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Last Name *
+                                {fieldIssues.patientLastName.hasIssue ? (
+                                  <span className="ml-2 text-xs px-2 py-1 rounded bg-red-100 text-red-800">
+                                    {fieldIssues.patientLastName.reason}
+                                  </span>
+                                ) : (
+                                  <span className="ml-2 text-xs px-2 py-1 rounded bg-green-100 text-green-800">
+                                    ✓ {fieldIssues.patientLastName.confidence}%
+                                  </span>
+                                )}
+                              </label>
+                              <input
+                                type="text"
+                                value={formData.patientLastName}
+                                onChange={(e) => handleFieldChange('patientLastName', e.target.value)}
+                                className={`w-full border rounded px-3 py-2 ${
+                                  fieldIssues.patientLastName.hasIssue ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                                }`}
+                              />
+                              {fieldIssues.patientLastName.hasIssue && (
+                                <p className="text-xs text-red-600 mt-1">⚠️ Verify spelling - "Smlth" should likely be "Smith"</p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="mb-3">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Date of Birth *
+                              {fieldIssues.patientDOB.hasIssue ? (
+                                <span className="ml-2 text-xs px-2 py-1 rounded bg-red-100 text-red-800">
+                                  {fieldIssues.patientDOB.reason}
+                                </span>
+                              ) : (
+                                <span className="ml-2 text-xs px-2 py-1 rounded bg-green-100 text-green-800">
+                                  ✓ {fieldIssues.patientDOB.confidence}%
+                                </span>
+                              )}
+                            </label>
+                            <input
+                              type="date"
+                              value={formData.patientDOB}
+                              onChange={(e) => handleFieldChange('patientDOB', e.target.value)}
+                              className={`w-full border rounded px-3 py-2 ${
+                                fieldIssues.patientDOB.hasIssue ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                              }`}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Provider Section */}
+                        <div className="bg-gray-50 p-3 rounded">
+                          <h3 className="font-semibold text-gray-900 mb-3">Provider Information</h3>
+                          
+                          <div className="mb-3">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Provider NPI *
+                              {fieldIssues.npi.hasIssue ? (
+                                <span className="ml-2 text-xs px-2 py-1 rounded bg-red-100 text-red-800">
+                                  {fieldIssues.npi.reason}
+                                </span>
+                              ) : (
+                                <span className="ml-2 text-xs px-2 py-1 rounded bg-green-100 text-green-800">
+                                  ✓ {fieldIssues.npi.confidence}%
+                                </span>
+                              )}
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.npi}
+                              onChange={(e) => handleFieldChange('npi', e.target.value)}
+                              className={`w-full border rounded px-3 py-2 ${
+                                fieldIssues.npi.hasIssue ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                              }`}
+                              maxLength="10"
+                            />
+                            {fieldIssues.npi.hasIssue && (
+                              <p className="text-xs text-red-600 mt-1">⚠️ NPI must be exactly 10 digits - verify last digit</p>
+                            )}
+                          </div>
+
+                          <div className="mb-3">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Provider Name *
+                              {fieldIssues.providerName.hasIssue ? (
+                                <span className="ml-2 text-xs px-2 py-1 rounded bg-red-100 text-red-800">
+                                  {fieldIssues.providerName.reason}
+                                </span>
+                              ) : (
+                                <span className="ml-2 text-xs px-2 py-1 rounded bg-green-100 text-green-800">
+                                  ✓ {fieldIssues.providerName.confidence}%
+                                </span>
+                              )}
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.providerName}
+                              onChange={(e) => handleFieldChange('providerName', e.target.value)}
+                              className={`w-full border rounded px-3 py-2 ${
+                                fieldIssues.providerName.hasIssue ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                              }`}
+                            />
+                          </div>
+
+                          <div className="mb-3">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Provider Tax ID (EIN) *
+                              {fieldIssues.providerTaxId.hasIssue ? (
+                                <span className="ml-2 text-xs px-2 py-1 rounded bg-red-100 text-red-800">
+                                  {fieldIssues.providerTaxId.reason}
+                                </span>
+                              ) : (
+                                <span className="ml-2 text-xs px-2 py-1 rounded bg-green-100 text-green-800">
+                                  ✓ Present
+                                </span>
+                              )}
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.providerTaxId}
+                              onChange={(e) => handleFieldChange('providerTaxId', e.target.value)}
+                              placeholder="XX-XXXXXXX"
+                              className={`w-full border rounded px-3 py-2 ${
+                                fieldIssues.providerTaxId.hasIssue ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                              }`}
+                            />
+                            {fieldIssues.providerTaxId.hasIssue && (
+                              <p className="text-xs text-red-600 mt-1">⚠️ Field was blank on form - check if visible elsewhere</p>
+                            )}
+                          </div>
+
+                          <div className="mb-3">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Provider Fax Number *
+                              <span className="ml-2 font-bold text-orange-600">⭐ CRITICAL FOR AUTOMATED LETTER DELIVERY</span>
+                              {fieldIssues.providerFax.hasIssue ? (
+                                <span className="ml-2 text-xs px-2 py-1 rounded bg-red-100 text-red-800">
+                                  {fieldIssues.providerFax.reason}
+                                </span>
+                              ) : (
+                                <span className="ml-2 text-xs px-2 py-1 rounded bg-green-100 text-green-800">
+                                  ✓ {fieldIssues.providerFax.confidence}%
+                                </span>
+                              )}
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.providerFax}
+                              onChange={(e) => handleFieldChange('providerFax', e.target.value)}
+                              placeholder="(555) 123-4567"
+                              className={`w-full border-2 rounded px-3 py-2 ${
+                                fieldIssues.providerFax.hasIssue ? 'border-orange-400 bg-orange-50' : 'border-gray-300'
+                              }`}
+                            />
+                            <div className="mt-2 bg-orange-50 border-l-4 border-orange-500 p-3">
+                              <p className="text-sm text-orange-900">
+                                <strong>⚠️ CRITICAL:</strong> This fax will be used for automated letter delivery. Verify it matches the cover sheet - incorrect fax causes delivery failures.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Service Section */}
+                        <div className="bg-gray-50 p-3 rounded">
+                          <h3 className="font-semibold text-gray-900 mb-3">Service Information</h3>
+                          
+                          <div className="grid grid-cols-2 gap-3 mb-3">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                HCPCS Code *
+                                <span className="ml-2 text-xs px-2 py-1 rounded bg-green-100 text-green-800">
+                                  ✓ {fieldIssues.hcpcs.confidence}%
+                                </span>
+                              </label>
+                              <input
+                                type="text"
+                                value={formData.hcpcs}
+                                onChange={(e) => handleFieldChange('hcpcs', e.target.value)}
+                                className="w-full border border-gray-300 rounded px-3 py-2"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Diagnosis Code *
+                                <span className="ml-2 text-xs px-2 py-1 rounded bg-green-100 text-green-800">
+                                  ✓ {fieldIssues.diagnosisCode.confidence}%
+                                </span>
+                              </label>
+                              <input
+                                type="text"
+                                value={formData.diagnosisCode}
+                                onChange={(e) => handleFieldChange('diagnosisCode', e.target.value)}
+                                className="w-full border border-gray-300 rounded px-3 py-2"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="mb-3">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Service Date *
+                              <span className="ml-2 text-xs px-2 py-1 rounded bg-green-100 text-green-800">
+                                ✓ {fieldIssues.serviceDate.confidence}%
+                              </span>
+                            </label>
+                            <input
+                              type="date"
+                              value={formData.serviceDate}
+                              onChange={(e) => handleFieldChange('serviceDate', e.target.value)}
+                              className="w-full border border-gray-300 rounded px-3 py-2"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <button
+                          onClick={handleSubmitCorrection}
+                          className="w-full bg-blue-600 text-white px-4 py-3 rounded hover:bg-blue-700 font-semibold"
+                        >
+                          Submit All Corrections & Resume Workflow
+                        </button>
+                        <div className="flex gap-3">
+                          <button className="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                            Save Draft
+                          </button>
+                          <a
+                            href="FINAL_packets_dashboard.html"
+                            className="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 text-center"
+                          >
+                            Cancel
+                          </a>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 bg-gray-50 border border-gray-200 rounded p-3 text-sm text-gray-700">
+                        <strong>Note:</strong> Red-highlighted fields need attention (low OCR confidence or missing). Green checkmarks indicate good confidence. Correct any errors before submitting.
+                      </div>
+                    </>
+                  )}
+
+                  {reviewType === 'classification' && (
+                    <>
+                      <h2 className="text-lg font-bold text-gray-900 mb-4">
+                        Document Classification
+                      </h2>
+                      
+                      <div className="bg-amber-50 border border-amber-200 rounded p-3 mb-4">
+                        <p className="text-sm text-amber-900">
+                          <strong>Issue:</strong> Document does not appear to be a PA request. Please classify and determine appropriate action.
+                        </p>
+                      </div>
+
+                      <div className="mb-6">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          AI Classification Result
+                        </label>
+                        <div className="bg-gray-100 rounded p-3 text-sm">
+                          <p><strong>Predicted Type:</strong> Provider Inquiry Letter</p>
+                          <p><strong>Confidence:</strong> 85%</p>
+                          <p className="text-xs text-gray-600 mt-2">
+                            Document appears to be requesting status update on previous PA submission
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 mb-6">
+                        <p className="font-medium text-gray-900">Select Action:</p>
+                        
+                        <button
+                          onClick={() => handleReclassify('PA Request')}
+                          className="w-full bg-green-50 border-2 border-green-300 text-green-900 px-4 py-3 rounded hover:bg-green-100 text-left transition-colors"
+                        >
+                          <div className="font-semibold">✓ Reclassify as PA Request</div>
+                          <div className="text-sm text-green-700">Continue processing as prior authorization</div>
+                        </button>
+
+                        <button
+                          onClick={() => handleArchive('Appeal Letter')}
+                          className="w-full bg-blue-50 border-2 border-blue-300 text-blue-900 px-4 py-3 rounded hover:bg-blue-100 text-left transition-colors"
+                        >
+                          <div className="font-semibold">📋 Appeal Letter</div>
+                          <div className="text-sm text-blue-700">Archive - Appeals handled separately</div>
+                        </button>
+
+                        <button
+                          onClick={() => handleArchive('Provider Inquiry')}
+                          className="w-full bg-purple-50 border-2 border-purple-300 text-purple-900 px-4 py-3 rounded hover:bg-purple-100 text-left transition-colors"
+                        >
+                          <div className="font-semibold">❓ Provider Inquiry</div>
+                          <div className="text-sm text-purple-700">Archive and flag for inquiry response team</div>
+                        </button>
+
+                        <button
+                          onClick={() => handleArchive('Spam/Irrelevant')}
+                          className="w-full bg-gray-50 border-2 border-gray-300 text-gray-900 px-4 py-3 rounded hover:bg-gray-100 text-left transition-colors"
+                        >
+                          <div className="font-semibold">🗑️ Spam or Irrelevant</div>
+                          <div className="text-sm text-gray-700">Archive with no further action</div>
+                        </button>
+
+                        <a
+                          href="FINAL_packets_dashboard.html"
+                          className="block w-full border-2 border-gray-300 text-gray-900 px-4 py-3 rounded hover:bg-gray-50 text-center transition-colors"
+                        >
+                          Cancel
+                        </a>
+                      </div>
+
+                      <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-yellow-900">
+                        <strong>Note:</strong> Documents archived from manual review will NOT generate dismissal letters.
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Workflow Timeline */}
+              <div className="bg-white rounded-lg shadow p-6 mt-6">
+                <h3 className="font-bold text-gray-900 mb-4">Workflow Timeline</h3>
+                <div className="flex items-center gap-2 overflow-x-auto">
+                  <div className="flex-shrink-0 w-20 border-t-4 border-green-500"></div>
+                  <span className="flex-shrink-0 text-xs text-green-600 font-semibold">RECEIVED</span>
+                  <div className="flex-shrink-0 w-20 border-t-4 border-green-500"></div>
+                  <span className="flex-shrink-0 text-xs text-green-600 font-semibold">QUALITY</span>
+                  <div className="flex-shrink-0 w-20 border-t-4 border-green-500"></div>
+                  <span className="flex-shrink-0 text-xs text-green-600 font-semibold">EXTRACTION</span>
+                  <div className="flex-shrink-0 w-20 border-t-4 border-amber-500"></div>
+                  <span className="flex-shrink-0 text-xs text-amber-600 font-semibold">⚠️ MANUAL REVIEW</span>
+                  <div className="flex-shrink-0 w-20 border-t-4 border-gray-300 border-dashed"></div>
+                  <span className="flex-shrink-0 text-xs text-gray-600">CLASSIFICATION</span>
+                  <div className="flex-shrink-0 w-20 border-t-4 border-gray-300 border-dashed"></div>
+                  <span className="flex-shrink-0 text-xs text-gray-600">VALIDATION</span>
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<ManualReviewScreen />);
+    </script>
+</body>
+</html>

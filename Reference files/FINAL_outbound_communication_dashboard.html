@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WISeR - Outbound Communication Dashboard - Determination Letter Delivery Tracking</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* ===== WCAG 2.2 ACCESSIBILITY STYLES ===== */
+    
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+    
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: #3b82f6;
+      color: white;
+      padding: 8px 16px;
+      text-decoration: none;
+      font-weight: 600;
+      z-index: 9999;
+      border-radius: 0 0 4px 0;
+    }
+    
+    .skip-link:focus {
+      top: 0;
+    }
+    
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    [role="button"]:focus-visible,
+    [tabindex]:focus-visible {
+      outline: 3px solid #3b82f6;
+      outline-offset: 2px;
+    }
+    
+    button, a, [role="button"] {
+      min-height: 24px;
+      min-width: 24px;
+    }
+    
+    .text-gray-700 {
+      color: #6b7280 !important;
+    }
+    
+    .text-gray-600 {
+      color: #6b7280 !important;
+    }
+    
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    
+    *:focus-visible {
+      outline: 3px solid #3b82f6;
+      outline-offset: 2px;
+    }
+  </style>
+
+</head>
+<body class="bg-gray-50">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <div id="root"></div>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script type="text/babel">
+        const OpsMonitoringDashboard = () => {
+          const [filter, setFilter] = React.useState('exceptions'); // 'all', 'exceptions', 'successful'
+          const [autoRefresh, setAutoRefresh] = React.useState(true);
+
+          // Mock delivery tracking data
+          const deliveries = [
+            {
+              caseId: '01232025_098765432',
+              packetId: 'PKT-2025-001245',
+              patient: 'Jennifer Martinez',
+              provider: 'City Orthopedics',
+              letterType: 'Denial',
+              submittedAt: '2025-12-07 14:30',
+              providerFax: '(555) 987-6543',
+              faxVerified: true,
+              faxVerifiedBy: 'Jane Smith',
+              faxVerifiedAt: '2025-12-04 10:15',
+              deliveryStatus: {
+                providerFax: { status: 'Failed', attempts: 2, lastAttempt: '2025-12-07 14:45', error: 'Line busy', nextRetry: '2025-12-07 15:00' },
+                providerPortal: { status: 'Success', completedAt: '2025-12-07 14:32' },
+                esMD: { status: 'Success', completedAt: '2025-12-07 14:33' },
+                memberMail: { status: 'Success', completedAt: '2025-12-07 14:35', trackingNumber: 'USPS-9400111899223344556' }
+              },
+              hasException: true,
+              priority: 'High'
+            },
+            {
+              caseId: '01232025_076543356',
+              packetId: 'PKT-2025-001235',
+              patient: 'Piyush Saxena',
+              provider: 'Sunny Orthopaedic',
+              letterType: 'Approval',
+              submittedAt: '2025-12-07 13:15',
+              providerFax: '(555) 123-4568',
+              faxVerified: true,
+              faxVerifiedBy: 'John Doe',
+              faxVerifiedAt: '2025-12-03 09:20',
+              deliveryStatus: {
+                providerFax: { status: 'Failed', attempts: 3, lastAttempt: '2025-12-07 14:00', error: 'WestFax service down', nextRetry: 'Manual intervention required' },
+                providerPortal: { status: 'Success', completedAt: '2025-12-07 13:16' },
+                esMD: { status: 'N/A' },
+                memberMail: { status: 'Success', completedAt: '2025-12-07 13:20', trackingNumber: 'USPS-9400111899223344557' }
+              },
+              hasException: true,
+              priority: 'Medium'
+            },
+            {
+              caseId: '01212025_032122211',
+              packetId: 'PKT-2025-001240',
+              patient: 'William Carter',
+              provider: 'County Medical',
+              letterType: 'Approval',
+              submittedAt: '2025-12-07 12:00',
+              providerFax: '(555) 222-3333',
+              faxVerified: true,
+              faxVerifiedBy: 'Jane Smith',
+              faxVerifiedAt: '2025-12-02 14:45',
+              deliveryStatus: {
+                providerFax: { status: 'Success', completedAt: '2025-12-07 12:02', confirmationId: 'WF-20251207-120245' },
+                providerPortal: { status: 'Success', completedAt: '2025-12-07 12:01' },
+                esMD: { status: 'N/A' },
+                memberMail: { status: 'Success', completedAt: '2025-12-07 12:05', trackingNumber: 'USPS-9400111899223344558' }
+              },
+              hasException: false,
+              priority: 'Medium'
+            },
+            {
+              caseId: '01222025_055544433',
+              packetId: 'PKT-2025-001242',
+              patient: 'Robert Thompson',
+              provider: 'Metro Clinic',
+              letterType: 'Partial Approval',
+              submittedAt: '2025-12-07 11:30',
+              providerFax: '(555) 444-5555',
+              faxVerified: true,
+              faxVerifiedBy: 'John Doe',
+              faxVerifiedAt: '2025-12-01 16:30',
+              deliveryStatus: {
+                providerFax: { status: 'Success', completedAt: '2025-12-07 11:32', confirmationId: 'WF-20251207-113245' },
+                providerPortal: { status: 'Success', completedAt: '2025-12-07 11:31' },
+                esMD: { status: 'Success', completedAt: '2025-12-07 11:33' },
+                memberMail: { status: 'Success', completedAt: '2025-12-07 11:35', trackingNumber: 'USPS-9400111899223344559' }
+              },
+              hasException: false,
+              priority: 'Low'
+            },
+            {
+              caseId: '01202025_087654321',
+              packetId: 'PKT-2025-001238',
+              patient: 'Maria Garcia',
+              provider: 'Central Health',
+              letterType: 'Need More Info',
+              submittedAt: '2025-12-07 10:45',
+              providerFax: '(555) 666-7777',
+              faxVerified: true,
+              faxVerifiedBy: 'Jane Smith',
+              faxVerifiedAt: '2025-11-30 11:00',
+              deliveryStatus: {
+                providerFax: { status: 'Success', completedAt: '2025-12-07 10:47', confirmationId: 'WF-20251207-104745' },
+                providerPortal: { status: 'Success', completedAt: '2025-12-07 10:46' },
+                esMD: { status: 'N/A' },
+                memberMail: { status: 'N/A', reason: 'Not required for info requests' }
+              },
+              hasException: false,
+              priority: 'Low'
+            }
+          ];
+
+          const filteredDeliveries = deliveries.filter(d => {
+            if (filter === 'exceptions') return d.hasException;
+            if (filter === 'successful') return !d.hasException;
+            return true;
+          });
+
+          const stats = {
+            total: deliveries.length,
+            exceptions: deliveries.filter(d => d.hasException).length,
+            successful: deliveries.filter(d => !d.hasException).length,
+            faxFailures: deliveries.filter(d => d.deliveryStatus.providerFax.status === 'Failed').length,
+            portalFailures: deliveries.filter(d => d.deliveryStatus.providerPortal.status === 'Failed').length
+          };
+
+          const getStatusBadge = (status) => {
+            const badges = {
+              'Success': 'bg-green-100 text-green-800 border-green-300',
+              'Failed': 'bg-red-100 text-red-800 border-red-300',
+              'In Progress': 'bg-blue-100 text-blue-800 border-blue-300',
+              'N/A': 'bg-gray-100 text-gray-600 border-gray-300'
+            };
+            return badges[status] || badges['N/A'];
+          };
+
+          const handleRetryFax = (delivery) => {
+            alert(`Retrying fax to ${delivery.providerFax} for case ${delivery.caseId}. WestFax window will open.`);
+          };
+
+          const handleManualFax = (delivery) => {
+            alert(`Opening WestFax for manual intervention. Case ${delivery.caseId}. Fax: ${delivery.providerFax}`);
+          };
+
+          const handleMarkResolved = (delivery) => {
+            if (window.confirm(`Mark fax delivery as resolved for case ${delivery.caseId}? This will close the exception.`)) {
+              alert('Exception marked as resolved. Case will move to closed status.');
+              window.location.reload();
+            }
+          };
+
+          const handleContactProvider = (delivery) => {
+            alert(`Opening provider contact form for ${delivery.provider}. Alternative delivery methods: Portal notification, phone call.`);
+          };
+
+          return (
+            <div className="min-h-screen bg-gray-50 p-6">
+              {/* Breadcrumb */}
+              <div className="mb-6">
+                <nav className="flex items-center space-x-2 text-sm">
+                  <a href="FINAL_packets_dashboard.html" className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
+                    <span>←</span> Main Dashboard
+                  </a>
+                  <span className="text-gray-600">/</span>
+                  <span className="text-gray-700">Outbound Communication</span>
+                </nav>
+              </div>
+
+              {/* Header */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h1 id="main-content" className="text-3xl font-bold text-gray-900">Outbound Communication Dashboard</h1>
+                    <p className="text-gray-600 mt-1">Monitor automated letter delivery and handle exceptions</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 text-sm">
+                      <input 
+                        type="checkbox" 
+                        checked={autoRefresh}
+                        onChange={(e) => setAutoRefresh(e.target.checked)}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-gray-700">Auto-refresh (30s)</span>
+                    </label>
+                    <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                      🔄 Refresh Now
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats Cards */}
+              <div className="grid grid-cols-5 gap-4 mb-6">
+                <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+                  <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
+                  <div className="text-sm text-gray-600">Total in Queue</div>
+                  <div className="text-xs text-gray-700 mt-1">Last 24 hours</div>
+                </div>
+                <div className={`rounded-lg shadow p-4 border-l-4 ${
+                  stats.exceptions > 0 ? 'bg-red-50 border-red-500' : 'bg-green-50 border-green-500'
+                }`}>
+                  <div className={`text-2xl font-bold ${stats.exceptions > 0 ? 'text-red-900' : 'text-green-900'}`}>
+                    {stats.exceptions}
+                  </div>
+                  <div className={`text-sm ${stats.exceptions > 0 ? 'text-red-700' : 'text-green-700'}`}>
+                    Exceptions
+                  </div>
+                  <div className={`text-xs mt-1 ${stats.exceptions > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    {stats.exceptions > 0 ? '⚠️ Needs attention' : '✓ All clear'}
+                  </div>
+                </div>
+                <div className="bg-green-50 rounded-lg shadow p-4 border-l-4 border-green-500">
+                  <div className="text-2xl font-bold text-green-900">{stats.successful}</div>
+                  <div className="text-sm text-green-700">Successful</div>
+                  <div className="text-xs text-green-600 mt-1">All deliveries OK</div>
+                </div>
+                <div className={`rounded-lg shadow p-4 border-l-4 ${
+                  stats.faxFailures > 0 ? 'bg-red-50 border-red-500' : 'bg-gray-50 border-gray-300'
+                }`}>
+                  <div className={`text-2xl font-bold ${stats.faxFailures > 0 ? 'text-red-900' : 'text-gray-900'}`}>
+                    {stats.faxFailures}
+                  </div>
+                  <div className={`text-sm ${stats.faxFailures > 0 ? 'text-red-700' : 'text-gray-700'}`}>
+                    Fax Failures
+                  </div>
+                  <div className={`text-xs mt-1 ${stats.faxFailures > 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                    WestFax issues
+                  </div>
+                </div>
+                <div className={`rounded-lg shadow p-4 border-l-4 ${
+                  stats.portalFailures > 0 ? 'bg-red-50 border-red-500' : 'bg-gray-50 border-gray-300'
+                }`}>
+                  <div className={`text-2xl font-bold ${stats.portalFailures > 0 ? 'text-red-900' : 'text-gray-900'}`}>
+                    {stats.portalFailures}
+                  </div>
+                  <div className={`text-sm ${stats.portalFailures > 0 ? 'text-red-700' : 'text-gray-700'}`}>
+                    Portal Failures
+                  </div>
+                  <div className={`text-xs mt-1 ${stats.portalFailures > 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                    Upload issues
+                  </div>
+                </div>
+              </div>
+
+              {/* Filter Tabs */}
+              <div className="bg-white rounded-lg shadow p-4 mb-6">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setFilter('exceptions')}
+                    className={`px-4 py-2 rounded transition-colors ${
+                      filter === 'exceptions' 
+                        ? 'bg-red-600 text-white' 
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    ⚠️ Exceptions Only ({stats.exceptions})
+                  </button>
+                  <button
+                    onClick={() => setFilter('successful')}
+                    className={`px-4 py-2 rounded transition-colors ${
+                      filter === 'successful' 
+                        ? 'bg-green-600 text-white' 
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    ✓ Successful ({stats.successful})
+                  </button>
+                  <button
+                    onClick={() => setFilter('all')}
+                    className={`px-4 py-2 rounded transition-colors ${
+                      filter === 'all' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    All Deliveries ({stats.total})
+                  </button>
+                </div>
+              </div>
+
+              {/* Deliveries List */}
+              <div className="space-y-4">
+                {filteredDeliveries.map((delivery) => (
+                  <div key={delivery.caseId} className={`bg-white rounded-lg shadow p-6 ${
+                    delivery.hasException ? 'border-l-4 border-red-500' : ''
+                  }`}>
+                    {/* Case Header */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <h3 className="text-lg font-bold text-gray-900">Case {delivery.caseId}</h3>
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${
+                            delivery.priority === 'High' ? 'bg-red-100 text-red-800' :
+                            delivery.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {delivery.priority}
+                          </span>
+                          <span className="px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                            {delivery.letterType}
+                          </span>
+                          {delivery.hasException && (
+                            <span className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800 border border-red-300">
+                              ⚠️ EXCEPTION
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Patient: {delivery.patient} | Provider: {delivery.provider}
+                        </p>
+                        <p className="text-xs text-gray-700 mt-1">
+                          Submitted: {delivery.submittedAt} | Packet: {delivery.packetId}
+                        </p>
+                      </div>
+                      <a 
+                        href={`FINAL_packet_detail_view.html?id=${delivery.packetId}`}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        View Packet →
+                      </a>
+                    </div>
+
+                    {/* Fax Verification Info */}
+                    <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
+                      <div className="flex items-center justify-between text-sm">
+                        <div>
+                          <span className="font-semibold text-blue-900">Fax Number: {delivery.providerFax}</span>
+                          <span className="text-blue-700 ml-2">
+                            ✓ Verified by {delivery.faxVerifiedBy} on {delivery.faxVerifiedAt}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Delivery Status Grid */}
+                    <div className="grid grid-cols-4 gap-4">
+                      {/* Provider Fax */}
+                      <div className={`border rounded p-4 ${
+                        delivery.deliveryStatus.providerFax.status === 'Failed' ? 'bg-red-50 border-red-300' : 'bg-gray-50'
+                      }`}>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-semibold text-gray-900">Provider Fax</span>
+                          <span className={`text-xs px-2 py-1 rounded border font-medium ${getStatusBadge(delivery.deliveryStatus.providerFax.status)}`}>
+                            {delivery.deliveryStatus.providerFax.status}
+                          </span>
+                        </div>
+                        {delivery.deliveryStatus.providerFax.status === 'Success' && (
+                          <div className="text-xs text-gray-600">
+                            <p>✓ Sent: {delivery.deliveryStatus.providerFax.completedAt}</p>
+                            <p className="font-mono mt-1">{delivery.deliveryStatus.providerFax.confirmationId}</p>
+                          </div>
+                        )}
+                        {delivery.deliveryStatus.providerFax.status === 'Failed' && (
+                          <div className="text-xs">
+                            <p className="text-red-700 font-semibold">Error: {delivery.deliveryStatus.providerFax.error}</p>
+                            <p className="text-red-600 mt-1">Attempts: {delivery.deliveryStatus.providerFax.attempts}/3</p>
+                            <p className="text-red-600">Last: {delivery.deliveryStatus.providerFax.lastAttempt}</p>
+                            <p className="text-red-600 mt-1">Next: {delivery.deliveryStatus.providerFax.nextRetry}</p>
+                            <div className="mt-3 space-y-2">
+                              {delivery.deliveryStatus.providerFax.attempts < 3 && (
+                                <button 
+                                  onClick={() => handleRetryFax(delivery)}
+                                  className="w-full bg-orange-600 text-white px-3 py-1 rounded hover:bg-orange-700 text-xs font-semibold"
+                                >
+                                  🔄 Retry Now
+                                </button>
+                              )}
+                              <button 
+                                onClick={() => handleManualFax(delivery)}
+                                className="w-full bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-xs font-semibold"
+                              >
+                                📠 Manual Send
+                              </button>
+                              <button 
+                                onClick={() => handleMarkResolved(delivery)}
+                                className="w-full bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700 text-xs"
+                              >
+                                ✓ Mark Resolved
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Provider Portal */}
+                      <div className="border rounded p-4 bg-gray-50">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-semibold text-gray-900">Provider Portal</span>
+                          <span className={`text-xs px-2 py-1 rounded border font-medium ${getStatusBadge(delivery.deliveryStatus.providerPortal.status)}`}>
+                            {delivery.deliveryStatus.providerPortal.status}
+                          </span>
+                        </div>
+                        {delivery.deliveryStatus.providerPortal.status === 'Success' && (
+                          <div className="text-xs text-gray-600">
+                            <p>✓ Uploaded: {delivery.deliveryStatus.providerPortal.completedAt}</p>
+                            <p className="mt-1 text-green-600">Provider can access immediately</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* esMD to MAC */}
+                      <div className="border rounded p-4 bg-gray-50">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-semibold text-gray-900">esMD to MAC</span>
+                          <span className={`text-xs px-2 py-1 rounded border font-medium ${getStatusBadge(delivery.deliveryStatus.esMD.status)}`}>
+                            {delivery.deliveryStatus.esMD.status}
+                          </span>
+                        </div>
+                        {delivery.deliveryStatus.esMD.status === 'Success' && (
+                          <div className="text-xs text-gray-600">
+                            <p>✓ Sent: {delivery.deliveryStatus.esMD.completedAt}</p>
+                            <p className="mt-1 text-green-600">Transaction complete</p>
+                          </div>
+                        )}
+                        {delivery.deliveryStatus.esMD.status === 'N/A' && (
+                          <div className="text-xs text-gray-700">
+                            <p>Not applicable</p>
+                            <p className="mt-1">(Non-esMD intake)</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Member Mail */}
+                      <div className="border rounded p-4 bg-gray-50">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-semibold text-gray-900">Member Mail</span>
+                          <span className={`text-xs px-2 py-1 rounded border font-medium ${getStatusBadge(delivery.deliveryStatus.memberMail.status)}`}>
+                            {delivery.deliveryStatus.memberMail.status}
+                          </span>
+                        </div>
+                        {delivery.deliveryStatus.memberMail.status === 'Success' && (
+                          <div className="text-xs text-gray-600">
+                            <p>✓ Mailed: {delivery.deliveryStatus.memberMail.completedAt}</p>
+                            <p className="font-mono mt-1 break-all">{delivery.deliveryStatus.memberMail.trackingNumber}</p>
+                          </div>
+                        )}
+                        {delivery.deliveryStatus.memberMail.status === 'N/A' && delivery.deliveryStatus.memberMail.reason && (
+                          <div className="text-xs text-gray-700">
+                            <p>{delivery.deliveryStatus.memberMail.reason}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Exception Actions */}
+                    {delivery.hasException && (
+                      <div className="mt-4 bg-red-50 border border-red-200 rounded p-4">
+                        <p className="text-sm text-red-900 font-semibold mb-3">
+                          ⚠️ Action Required: Fax delivery failed. Please retry or use alternative delivery method.
+                        </p>
+                        <div className="flex gap-3">
+                          <button 
+                            onClick={() => handleContactProvider(delivery)}
+                            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
+                          >
+                            📞 Contact Provider
+                          </button>
+                          <button className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 text-sm">
+                            📋 View Full History
+                          </button>
+                          <button className="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 text-sm">
+                            🚨 Escalate to Supervisor
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {filteredDeliveries.length === 0 && (
+                <div className="bg-white rounded-lg shadow p-12 text-center">
+                  <div className="text-6xl mb-4">🎉</div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    {filter === 'exceptions' ? 'No Exceptions!' : 'No Deliveries'}
+                  </h3>
+                  <p className="text-gray-600">
+                    {filter === 'exceptions' 
+                      ? 'All deliveries are processing smoothly.' 
+                      : 'No deliveries found matching your filter.'}
+                  </p>
+                </div>
+              )}
+
+              {/* Bottom Actions */}
+              <div className="flex gap-3 mt-6">
+                <a 
+                  href="FINAL_packets_dashboard.html"
+                  className="bg-gray-200 text-gray-700 px-6 py-3 rounded hover:bg-gray-300 font-semibold flex items-center gap-2"
+                >
+                  <span>←</span> Main Dashboard
+                </a>
+                <a
+                  href="FINAL_clinical_review_dashboard.html"
+                  className="border border-gray-300 px-6 py-3 rounded hover:bg-gray-50"
+                >
+                  Clinical Review
+                </a>
+                <button className="border border-gray-300 px-6 py-3 rounded hover:bg-gray-50">
+                  Export Report
+                </button>
+              </div>
+            </div>
+          );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<OpsMonitoringDashboard />);
+    </script>
+</body>
+</html>
