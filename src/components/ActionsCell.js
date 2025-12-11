@@ -33,17 +33,29 @@ const icons = {
 };
 
 function ActionButton({ type, tooltip, onClick, disabled }) {
+  const [hovered, setHovered] = React.useState(false);
+  const style = {
+    ...iconStyles.base,
+    boxShadow: hovered
+      ? '0 4px 8px rgba(0,0,0,0.3)'
+      : '0 2px 5px rgba(0,0,0,0.2)',
+    transform: hovered ? 'translateY(-2px)' : 'none',
+    transition: 'box-shadow 0.2s, transform 0.2s',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    ...(iconStyles[type] && !disabled ? iconStyles[type][':hover'] : {}),
+    ...(disabled ? iconStyles.disabled : {}),
+  };
   return (
     <button
-      style={{
-        ...iconStyles.base,
-        ...(iconStyles[type] && !disabled ? iconStyles[type][':hover'] : {}),
-        ...(disabled ? iconStyles.disabled : {}),
-      }}
+      style={style}
       onClick={disabled ? undefined : onClick}
       title={tooltip}
       aria-label={tooltip}
       disabled={disabled}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      tabIndex={0}
+      role="button"
     >
       {icons[type]}
     </button>

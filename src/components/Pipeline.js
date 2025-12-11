@@ -33,6 +33,7 @@ const StageCircle = ({ status, tooltip, onClick }) => {
   else if (status === 'skipped') content = <span style={{ color: 'white', fontWeight: 700 }}>–</span>;
   else content = null;
 
+  const [hovered, setHovered] = React.useState(false);
   const baseStyle = {
     width: 22,
     height: 22,
@@ -44,15 +45,27 @@ const StageCircle = ({ status, tooltip, onClick }) => {
     justifyContent: 'center',
     margin: '0 4px',
     position: 'relative',
-    boxShadow: status === 'current' ? '0 0 8px #007bff88' : 'none',
-    animation: status === 'current' ? 'pulse 1.2s infinite' : 'none',
+    boxShadow: hovered
+      ? '0 4px 8px rgba(0,0,0,0.3)'
+      : '0 2px 5px rgba(0,0,0,0.2)',
+    transform: hovered ? 'translateY(-2px)' : 'none',
+    transition: 'box-shadow 0.2s, transform 0.2s',
     color: status === 'completed' || status === 'failed' || status === 'skipped' ? 'white' : '#888',
     backgroundColor: status === 'upcoming' ? '#fff' : stageColors[status],
     cursor: 'pointer',
   };
 
   return (
-    <div style={baseStyle} title={tooltip} onClick={onClick}>
+    <div
+      style={baseStyle}
+      title={tooltip}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      tabIndex={0}
+      role="button"
+      aria-label={tooltip}
+    >
       {content}
     </div>
   );

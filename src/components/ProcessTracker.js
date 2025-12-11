@@ -237,7 +237,7 @@ export default function ProcessTracker() {
         maxWidth: '100%',
       }}
     >
-      <h2 style={{ marginBottom: 24 }}>WISeR Production Support Dashboard</h2>
+      {/* Removed dashboard heading as requested */}
       <MetricsRow metrics={metrics} onFilter={handleFilter} />
       <FilterBar
         filters={filters}
