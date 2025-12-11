@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import MetricsRow from './MetricsRow';
+import { getCriticalErrors, getPendingManualReview, getProcessingNow, getCompletedToday, filterPackets } from './processUtils';
 
 const processStages = [
   'Packet Intake',
@@ -102,10 +104,55 @@ const samplePackets = [
 ];
 
 export default function ProcessTracker() {
-  const [packets] = useState(samplePackets);
+  const [packets, setPackets] = useState(samplePackets);
+  const [filter, setFilter] = useState(null);
+
+  // Demo metric data
+  const metrics = [
+    {
+      color: 'red',
+      count: getCriticalErrors(packets).length,
+      label: 'Critical Errors',
+      percent: 12,
+      direction: 'up',
+      filterType: 'critical',
+    },
+    {
+      color: 'orange',
+      count: getPendingManualReview(packets).length,
+      label: 'Pending Manual Review',
+      percent: 5,
+      direction: 'down',
+      filterType: 'manual',
+    },
+    {
+      color: 'blue',
+      count: getProcessingNow(packets).length,
+      label: 'Processing Now',
+      percent: 8,
+      direction: 'up',
+      filterType: 'processing',
+    },
+    {
+      color: 'green',
+      count: getCompletedToday(packets).length,
+      label: 'Completed Today',
+      percent: 3,
+      direction: 'up',
+      filterType: 'completed',
+    },
+  ];
+
+  const handleFilter = (type) => {
+    setFilter(type);
+  };
+
+  const filteredPackets = filter ? filterPackets(packets, filter) : packets;
+
   return (
     <div>
       <h2 style={{ marginBottom: 24 }}>WISeR Production Support Dashboard</h2>
+      <MetricsRow metrics={metrics} onFilter={handleFilter} />
       <section aria-label="Process Table">
         <table 
           style={{ width: '100%', borderCollapse: 'collapse', background: 'white' }}
@@ -122,7 +169,7 @@ export default function ProcessTracker() {
             </tr>
           </thead>
           <tbody>
-            {packets.map((pkt, idx) => (
+            {filteredPackets.map((pkt, idx) => (
               <tr key={pkt.id} style={{ borderBottom: '1px solid #f0f0f0', background: idx % 2 === 0 ? '#fff' : '#fafbfc' }}>
                 <td style={{ padding: '12px 16px', borderRight: '1px solid #f0f0f0' }}>{pkt.id}</td>
                 <td style={{ padding: '12px 16px', borderRight: '1px solid #f0f0f0' }}>{pkt.channel}</td>
