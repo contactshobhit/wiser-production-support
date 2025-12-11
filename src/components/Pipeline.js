@@ -1,0 +1,92 @@
+import React from 'react';
+
+const STAGES = [
+  'Received',
+  'Validation',
+  'Eligibility Check',
+  'Medical Review',
+  'Decision',
+  'Delivery',
+];
+
+const getStageStatus = (packet, idx) => {
+  // Simulated logic for demo
+  if (packet.failedStage === idx) return 'failed';
+  if (idx < packet.currentStage) return 'completed';
+  if (idx === packet.currentStage) return 'current';
+  if (packet.skippedStages && packet.skippedStages.includes(idx)) return 'skipped';
+  return 'upcoming';
+};
+
+const stageColors = {
+  completed: '#28a745',
+  current: '#007bff',
+  failed: '#dc3545',
+  upcoming: '#ccc',
+  skipped: '#bbb',
+};
+
+const StageCircle = ({ status, tooltip }) => {
+  let content;
+  if (status === 'completed') content = <span style={{ color: 'white', fontWeight: 700 }}>✓</span>;
+  else if (status === 'failed') content = <span style={{ color: 'white', fontWeight: 700 }}>✗</span>;
+  else if (status === 'skipped') content = <span style={{ color: 'white', fontWeight: 700 }}>–</span>;
+  else content = null;
+
+  const baseStyle = {
+    width: 22,
+    height: 22,
+    borderRadius: '50%',
+    background: status === 'current' ? stageColors.current : stageColors[status],
+    border: status === 'current' ? '2px solid #007bff' : '2px solid #eee',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: '0 4px',
+    position: 'relative',
+    boxShadow: status === 'current' ? '0 0 8px #007bff88' : 'none',
+    animation: status === 'current' ? 'pulse 1.2s infinite' : 'none',
+    color: status === 'completed' || status === 'failed' || status === 'skipped' ? 'white' : '#888',
+    backgroundColor: status === 'upcoming' ? '#fff' : stageColors[status],
+    cursor: 'pointer',
+  };
+
+  return (
+    <div style={baseStyle} title={tooltip}>
+      {content}
+    </div>
+  );
+};
+
+const Pipeline = ({ packet, audit }) => {
+  // Simulated audit: [{ state: 'Received', time: '...' }, ...]
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', minWidth: 180 }}>
+      {STAGES.map((stage, idx) => {
+        const status = getStageStatus(packet, idx);
+        const auditEntry = audit && audit.find(a => a.state === stage);
+        let tooltip = `${stage}`;
+        if (auditEntry) tooltip += `\nCompleted: ${auditEntry.time}`;
+        if (status === 'failed') tooltip += `\nError: ${packet.errorMsg || 'Unknown error'}`;
+        // Simulate time spent
+        tooltip += `\nTime spent: 5m`;
+        return (
+          <React.Fragment key={stage}>
+            <StageCircle status={status} tooltip={tooltip} />
+            {idx < STAGES.length - 1 && (
+              <div style={{
+                height: 4,
+                width: 24,
+                background: status === 'completed' ? stageColors.completed : '#eee',
+                borderRadius: 2,
+                margin: '0 2px',
+              }} />
+            )}
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+};
+
+export default Pipeline;

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import MetricsRow from './MetricsRow';
 import ActionsCell from './ActionsCell';
+import Pipeline from './Pipeline';
+import FilterBar from './FilterBar';
 import { getCriticalErrors, getPendingManualReview, getProcessingNow, getCompletedToday, filterPackets } from './processUtils';
 
 const processStages = [
@@ -107,6 +109,8 @@ const samplePackets = [
 export default function ProcessTracker() {
   const [packets, setPackets] = useState(samplePackets);
   const [filter, setFilter] = useState(null);
+  const [filters, setFilters] = useState({ search: '', status: [], channel: [], date: 'today' });
+  const [filteredPackets, setFilteredPackets] = useState(packets);
 
   // Demo metric data
   const metrics = [
@@ -148,12 +152,52 @@ export default function ProcessTracker() {
     setFilter(type);
   };
 
-  const filteredPackets = filter ? filterPackets(packets, filter) : packets;
+  // Filtering logic stub
+  const applyFilters = () => {
+    let result = packets;
+    // Quick search
+    if (filters.search) {
+      result = result.filter(pkt => pkt.id.includes(filters.search));
+    }
+    // Status pills
+    if (filters.status.length) {
+      result = result.filter(pkt => {
+        if (filters.status.includes('errors')) return pkt.status === 'Manual Correction';
+        if (filters.status.includes('inProgress')) return pkt.status === 'In Progress';
+        if (filters.status.includes('delivered')) return pkt.status === 'Delivered';
+        if (filters.status.includes('stuck')) return false; // Add stuck logic
+        return true;
+      });
+    }
+    // Channel selector
+    if (filters.channel.length) {
+      result = result.filter(pkt => filters.channel.includes(pkt.channel));
+    }
+    // Date range picker stub
+    // ...
+    setFilteredPackets(result);
+  };
+
+  React.useEffect(applyFilters, [filters, packets]);
+
+  const handleSearch = (val) => setFilters(f => ({ ...f, search: val }));
+  const handleClear = () => setFilters({ search: '', status: [], channel: [], date: 'today' });
+
+  const filteredPacketsToShow = filter ? filterPackets(packets, filter) : filteredPackets;
 
   return (
     <div>
       <h2 style={{ marginBottom: 24 }}>WISeR Production Support Dashboard</h2>
       <MetricsRow metrics={metrics} onFilter={handleFilter} />
+      <FilterBar
+        filters={filters}
+        setFilters={setFilters}
+        resultCount={filteredPackets.length}
+        totalCount={packets.length}
+        onSearch={handleSearch}
+        onClear={handleClear}
+        onAdvanced={() => {}}
+      />
       <section aria-label="Process Table">
         <table 
           style={{ width: '100%', borderCollapse: 'collapse', background: 'white' }}
@@ -171,23 +215,12 @@ export default function ProcessTracker() {
             </tr>
           </thead>
           <tbody>
-            {filteredPackets.map((pkt, idx) => (
+            {filteredPacketsToShow.map((pkt, idx) => (
               <tr key={pkt.id} style={{ borderBottom: '1px solid #f0f0f0', background: idx % 2 === 0 ? '#fff' : '#fafbfc' }}>
                 <td style={{ padding: '12px 16px', borderRight: '1px solid #f0f0f0' }}>{pkt.id}</td>
                 <td style={{ padding: '12px 16px', borderRight: '1px solid #f0f0f0' }}>{pkt.channel}</td>
                 <td style={{ padding: '12px 16px', borderRight: '1px solid #f0f0f0' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontWeight: 600 }}>{processStages[pkt.currentStage]}</span>
-                    <progress 
-                      value={pkt.currentStage + 1} 
-                      max={processStages.length} 
-                      style={{ width: 180, marginTop: 4 }} 
-                      aria-valuenow={pkt.currentStage + 1}
-                      aria-valuemin={1}
-                      aria-valuemax={processStages.length}
-                      aria-label={`Progress: ${pkt.currentStage + 1} of ${processStages.length}`}
-                    />
-                  </div>
+                  <Pipeline packet={pkt} audit={pkt.audit} />
                 </td>
                 <td style={{ padding: '12px 16px', borderRight: '1px solid #f0f0f0' }}>{pkt.status}</td>
                 <td style={{ padding: '12px 16px' }}>{pkt.lastUpdate}</td>
