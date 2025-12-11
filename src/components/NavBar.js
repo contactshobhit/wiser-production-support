@@ -3,9 +3,7 @@ import React from 'react';
 export default function NavBar({ current, onNavigate }) {
   const navItems = [
     { key: 'api', label: 'API Health' },
-    { key: 'process', label: 'Process Tracker' },
-    { key: 'errors', label: 'Error Logs' },
-    { key: 'payload', label: 'Payload Inspector' }
+    { key: 'process', label: 'Process Tracker' }
   ];
   return (
     <nav style={{
