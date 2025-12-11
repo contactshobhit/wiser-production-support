@@ -226,7 +226,17 @@ export default function ProcessTracker() {
   const filteredPacketsToShow = filter ? filterPackets(packets, filter) : filteredPackets;
 
   return (
-    <div>
+    <div
+      style={{
+        width: '100%',
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
+        flexWrap: 'wrap',
+        minWidth: '320px',
+        maxWidth: '100%',
+      }}
+    >
       <h2 style={{ marginBottom: 24 }}>WISeR Production Support Dashboard</h2>
       <MetricsRow metrics={metrics} onFilter={handleFilter} />
       <FilterBar
@@ -238,33 +248,40 @@ export default function ProcessTracker() {
         onClear={handleClear}
         onAdvanced={() => {}}
       />
-      <section aria-label="Process Table">
-        <table 
-          style={{ width: '100%', borderCollapse: 'collapse', background: 'white' }}
+      <section aria-label="Process Table" style={{ width: '100%', overflowX: 'auto' }}>
+        <table
+          style={{
+            width: '100%',
+            minWidth: '600px',
+            maxWidth: '100%',
+            borderCollapse: 'collapse',
+            background: 'white',
+            boxSizing: 'border-box',
+          }}
           aria-label="End-to-End Process Tracker Table"
         >
           <caption className="sr-only">End-to-End Process Tracker Table</caption>
           <thead>
             <tr style={{ background: '#f5f7fa' }}>
-              <th scope="col" style={{ padding: '12px 16px', borderBottom: '1px solid #e0e0e0', borderRight: '1px solid #e0e0e0' }}>Packet ID</th>
-              <th scope="col" style={{ padding: '12px 16px', borderBottom: '1px solid #e0e0e0', borderRight: '1px solid #e0e0e0' }}>Channel</th>
-              <th scope="col" style={{ padding: '12px 16px', borderBottom: '1px solid #e0e0e0', borderRight: '1px solid #e0e0e0' }}>Current Stage</th>
-              <th scope="col" style={{ padding: '12px 16px', borderBottom: '1px solid #e0e0e0', borderRight: '1px solid #e0e0e0' }}>Status</th>
-              <th scope="col" style={{ padding: '12px 16px', borderBottom: '1px solid #e0e0e0' }}>Last Update</th>
-              <th scope="col" style={{ padding: '12px 16px', borderBottom: '1px solid #e0e0e0' }}>Actions</th>
+              <th scope="col" style={{ padding: '8px 10px', borderBottom: '1px solid #e0e0e0', borderRight: '1px solid #e0e0e0', minWidth: 80 }}>Packet ID</th>
+              <th scope="col" style={{ padding: '8px 10px', borderBottom: '1px solid #e0e0e0', borderRight: '1px solid #e0e0e0', minWidth: 80 }}>Channel</th>
+              <th scope="col" style={{ padding: '8px 10px', borderBottom: '1px solid #e0e0e0', borderRight: '1px solid #e0e0e0', minWidth: 140 }}>Current Stage</th>
+              <th scope="col" style={{ padding: '8px 10px', borderBottom: '1px solid #e0e0e0', borderRight: '1px solid #e0e0e0', minWidth: 90 }}>Status</th>
+              <th scope="col" style={{ padding: '8px 10px', borderBottom: '1px solid #e0e0e0', minWidth: 90 }}>Last Update</th>
+              <th scope="col" style={{ padding: '8px 10px', borderBottom: '1px solid #e0e0e0', minWidth: 90 }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredPacketsToShow.map((pkt, idx) => (
               <tr key={pkt.id} style={{ borderBottom: '1px solid #f0f0f0', background: idx % 2 === 0 ? '#fff' : '#fafbfc' }}>
-                <td style={{ padding: '12px 16px', borderRight: '1px solid #f0f0f0' }}>{pkt.id}</td>
-                <td style={{ padding: '12px 16px', borderRight: '1px solid #f0f0f0' }}>{pkt.channel}</td>
-                <td style={{ padding: '12px 16px', borderRight: '1px solid #f0f0f0' }}>
+                <td style={{ padding: '8px 10px', borderRight: '1px solid #f0f0f0', minWidth: 80 }}>{pkt.id}</td>
+                <td style={{ padding: '8px 10px', borderRight: '1px solid #f0f0f0', minWidth: 80 }}>{pkt.channel}</td>
+                <td style={{ padding: '8px 10px', borderRight: '1px solid #f0f0f0', minWidth: 140 }}>
                   <Pipeline packet={pkt} audit={pkt.audit} onStageClick={stage => handleStageClick(stage, pkt)} />
                 </td>
-                <td style={{ padding: '12px 16px', borderRight: '1px solid #f0f0f0' }}>{pkt.status}</td>
-                <td style={{ padding: '12px 16px' }}>{pkt.lastUpdate}</td>
-                <td style={{ padding: '12px 16px' }}>
+                <td style={{ padding: '8px 10px', borderRight: '1px solid #f0f0f0', minWidth: 90 }}>{pkt.status}</td>
+                <td style={{ padding: '8px 10px', minWidth: 90 }}>{pkt.lastUpdate}</td>
+                <td style={{ padding: '8px 10px', minWidth: 90 }}>
                   <ActionsCell
                     packet={pkt}
                     onRetry={(packet) => {/* TODO: implement retry */}}

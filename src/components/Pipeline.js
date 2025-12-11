@@ -58,7 +58,7 @@ const StageCircle = ({ status, tooltip, onClick }) => {
   );
 };
 
-const Pipeline = ({ packet, audit, onStageClick }) => {
+const Pipeline = ({ packet, audit, onStageClick = () => {} }) => {
   // Simulated audit: [{ state: 'Received', time: '...' }, ...]
   return (
     <div style={{ display: 'flex', alignItems: 'center', minWidth: 180 }}>
@@ -87,10 +87,6 @@ const Pipeline = ({ packet, audit, onStageClick }) => {
       })}
     </div>
   );
-};
-
-Pipeline.defaultProps = {
-  onStageClick: () => {},
 };
 
 export default Pipeline;
