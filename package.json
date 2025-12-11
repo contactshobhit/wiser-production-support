@@ -1,5 +1,6 @@
 {
   "name": "wiser-production-support",
+  "description": "WISeR Production Support Dashboard for unified process, error, and payload tracking.",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
