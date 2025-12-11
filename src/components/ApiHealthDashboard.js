@@ -15,6 +15,42 @@ const statusIcon = {
   unknown: { icon: '⚪', label: 'Unknown' },
 };
 
+// Dummy data for API health trends
+const apiTrendDefs = [
+  { key: 'esMD', label: 'esMD API' },
+  { key: 'HETS', label: 'HETS Eligibility' },
+  { key: 'S3', label: 'S3 Sync' },
+  { key: 'Auth', label: 'Auth Token' },
+];
+const hours = Array.from({ length: 24 }, (_, i) => `${i}:00`);
+const statusTrend = apiTrendDefs.map(api => hours.map(h => Math.random() > 0.95 ? 'down' : 'up'));
+const latencyTrend = apiTrendDefs.map(api => hours.map(h => Math.floor(Math.random() * 2000) + 100));
+const errorTrend = apiTrendDefs.map(api => hours.map(h => Math.floor(Math.random() * 5)));
+
+function TrendChart({ data, label, color, yLabel }) {
+  // Simple line chart mockup
+  return (
+    <div style={{ marginBottom: 18 }}>
+      <div style={{ fontWeight: 500, fontSize: 15, marginBottom: 4 }}>{label}</div>
+      <div style={{ display: 'flex', alignItems: 'flex-end', height: 60, background: '#f8f9fa', borderRadius: 6, padding: '6px 0' }}>
+        {data.map((v, i) => (
+          <div key={i} style={{
+            width: 10,
+            height: typeof v === 'number' ? Math.max(6, v / 40) : 12,
+            background: typeof v === 'string' ? (v === 'up' ? '#28a745' : '#dc3545') : color,
+            margin: '0 1px',
+            borderRadius: 3,
+            position: 'relative',
+          }} title={hours[i] + (typeof v === 'number' ? `: ${v}${yLabel}` : v === 'up' ? ': Up' : ': Down')}>
+            {typeof v === 'string' && v === 'down' && <span style={{ position: 'absolute', top: -18, left: -2, color: '#dc3545', fontSize: 10 }}>↓</span>}
+          </div>
+        ))}
+      </div>
+      <div style={{ fontSize: 12, color: '#888', marginTop: 2 }}>{yLabel}</div>
+    </div>
+  );
+}
+
 export default function ApiHealthDashboard() {
   const [apis, setApis] = useState(initialApis);
 
@@ -32,45 +68,44 @@ export default function ApiHealthDashboard() {
   }, []);
 
   return (
-    <section aria-labelledby="api-dashboard-title" style={{ padding: 24 }}>
-      <h2 id="api-dashboard-title" style={{ marginBottom: 24 }}>API Health & Performance Dashboard</h2>
-      <table
-        style={{ width: '100%', borderCollapse: 'collapse', background: 'white' }}
-        aria-label="API health and performance table"
-      >
-        <thead>
-          <tr style={{ background: '#f5f7fa' }}>
-            <th scope="col" style={{ textAlign: 'left', padding: '12px 16px', borderBottom: '1px solid #e0e0e0', borderRight: '1px solid #e0e0e0', color: '#1a1a1a' }}>API</th>
-            <th scope="col" style={{ textAlign: 'center', padding: '12px 16px', borderBottom: '1px solid #e0e0e0', borderRight: '1px solid #e0e0e0', color: '#1a1a1a' }}>Status</th>
-            <th scope="col" style={{ textAlign: 'right', padding: '12px 16px', borderBottom: '1px solid #e0e0e0', borderRight: '1px solid #e0e0e0', color: '#1a1a1a' }}>Latency (ms)</th>
-            <th scope="col" style={{ textAlign: 'center', padding: '12px 16px', borderBottom: '1px solid #e0e0e0', color: '#1a1a1a' }}>Last Checked</th>
-          </tr>
-        </thead>
-        <tbody>
-          {apis.map(({ name, status, latency, lastChecked }, idx) => (
-            <tr
-              key={name}
-              style={{ borderBottom: '1px solid #f0f0f0', background: idx % 2 === 0 ? '#fff' : '#fafbfc' }}
-              tabIndex={0}
-              aria-label={`Row for ${name} API, status ${statusIcon[status].label}`}
-            >
-              <th scope="row" style={{ padding: '12px 16px', borderRight: '1px solid #f0f0f0', fontWeight: 600, color: '#222' }}>{name}</th>
-              <td style={{ textAlign: 'center', padding: '12px 16px', borderRight: '1px solid #f0f0f0', fontWeight: 600 }}>
-                <span
-                  role="img"
-                  aria-label={statusIcon[status].label}
-                  style={{ fontSize: 20, verticalAlign: 'middle', marginRight: 8 }}
-                >
-                  {statusIcon[status].icon}
-                </span>
-                <span style={{ color: status === 'down' ? '#b00020' : status === 'degraded' ? '#b36b00' : '#006400' }}>{statusIcon[status].label}</span>
-              </td>
-              <td style={{ textAlign: 'right', padding: '12px 16px', borderRight: '1px solid #f0f0f0', color: '#222' }}>{latency || '-'}</td>
-              <td style={{ textAlign: 'center', padding: '12px 16px', color: '#222' }}>{lastChecked || '-'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </section>
+    <div>
+      <div style={{ fontWeight: 600, fontSize: 18, marginBottom: 18 }}>API Health Dashboard</div>
+      {/* Historical Trends */}
+      <div style={{ display: 'flex', gap: 24, marginBottom: 32 }}>
+        {apiTrendDefs.map((api, i) => (
+          <div key={api.key} style={{ background: '#fff', borderRadius: 10, boxShadow: '0 1px 6px #0001', padding: 18, minWidth: 220 }}>
+            <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 8 }}>{api.label}</div>
+            <TrendChart data={statusTrend[i]} label="Uptime (24h)" color="#28a745" yLabel="" />
+            <TrendChart data={latencyTrend[i]} label="Latency (ms)" color="#007bff" yLabel=" ms" />
+            <TrendChart data={errorTrend[i]} label="Error Rate" color="#dc3545" yLabel=" errors" />
+          </div>
+        ))}
+      </div>
+      {/* Uptime Summary */}
+      <div style={{ background: '#fff', borderRadius: 10, boxShadow: '0 1px 6px #0001', padding: 18, marginBottom: 32 }}>
+        <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 10 }}>Uptime Summary</div>
+        {apiTrendDefs.map((api, i) => {
+          const upCount = statusTrend[i].filter(v => v === 'up').length;
+          const percent = Math.round((upCount / 24) * 100);
+          return (
+            <div key={api.key} style={{ marginBottom: 8, fontSize: 14 }}>
+              <span style={{ fontWeight: 500 }}>{api.label}:</span> <span style={{ color: percent > 98 ? '#28a745' : percent > 90 ? '#ffc107' : '#dc3545' }}>{percent}%</span> uptime
+            </div>
+          );
+        })}
+      </div>
+      {/* Diagnostics */}
+      <div style={{ background: '#fff', borderRadius: 10, boxShadow: '0 1px 6px #0001', padding: 18 }}>
+        <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 10 }}>Deeper Diagnostics</div>
+        {apiTrendDefs.map((api, i) => (
+          <div key={api.key} style={{ marginBottom: 14 }}>
+            <span style={{ fontWeight: 500 }}>{api.label}:</span>
+            <span style={{ marginLeft: 8, color: '#007bff' }}>Avg Latency: {Math.round(latencyTrend[i].reduce((a, b) => a + b, 0) / 24)} ms</span>
+            <span style={{ marginLeft: 18, color: '#dc3545' }}>Errors: {errorTrend[i].reduce((a, b) => a + b, 0)}</span>
+            <span style={{ marginLeft: 18, color: '#888' }}>Downtime: {statusTrend[i].filter(v => v === 'down').length} hrs</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
