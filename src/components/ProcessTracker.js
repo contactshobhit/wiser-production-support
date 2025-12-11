@@ -3,6 +3,7 @@ import MetricsRow from './MetricsRow';
 import ActionsCell from './ActionsCell';
 import Pipeline from './Pipeline';
 import FilterBar from './FilterBar';
+import ApiDebugPanel from './ApiDebugPanel';
 import { getCriticalErrors, getPendingManualReview, getProcessingNow, getCompletedToday, filterPackets } from './processUtils';
 
 const processStages = [
@@ -111,6 +112,8 @@ export default function ProcessTracker() {
   const [filter, setFilter] = useState(null);
   const [filters, setFilters] = useState({ search: '', status: [], channel: [], date: 'today' });
   const [filteredPackets, setFilteredPackets] = useState(packets);
+  const [debugOpen, setDebugOpen] = useState(false);
+  const [debugStageData, setDebugStageData] = useState(null);
 
   // Demo metric data
   const metrics = [
@@ -150,6 +153,43 @@ export default function ProcessTracker() {
 
   const handleFilter = (type) => {
     setFilter(type);
+  };
+
+  // Handler for pipeline stage click
+  const handleStageClick = (stage, packet) => {
+    // Dummy request/response data for demo
+    setDebugStageData({
+      request: {
+        url: `/api/${stage.toLowerCase().replace(/ /g, '-')}`,
+        headers: { Authorization: 'Bearer abcd****1234', 'Content-Type': 'application/json' },
+        payload: { packetId: packet.id, stage },
+        tokenExpiry: '2025-12-11T12:30:00Z',
+        correlationId: 'corr-xyz-789',
+      },
+      response: {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', 'X-Request-ID': 'req-5678' },
+        body: { result: 'success', details: `Stage ${stage} completed.` },
+        responseTime: 350,
+        size: 1.2,
+      },
+      timeline: [
+        { time: '10:15', action: 'Request sent' },
+        { time: '10:16', action: 'Response received' },
+      ],
+      error: { code: '', message: '', retries: 0 },
+      special:
+        stage === 'Eligibility Check'
+          ? { 'Member ID': '1EG4TE5MK72', 'Eligibility Status': 'Active', 'Coverage Dates': '2025-01-01 to 2025-12-31' }
+          : stage === 'Validation'
+          ? { 'Validation Result': 'Passed', 'Error Count': 0 }
+          : stage === 'Medical Review'
+          ? { 'Review Decision': 'Approved', 'Reviewer ID': 'REV-123', 'Reason Codes': 'N/A' }
+          : stage === 'Delivery'
+          ? { 'Package ID': packet.id, 'File Count': 3, 'Delivery Status': 'Delivered' }
+          : undefined,
+    });
+    setDebugOpen(true);
   };
 
   // Filtering logic stub
@@ -220,7 +260,7 @@ export default function ProcessTracker() {
                 <td style={{ padding: '12px 16px', borderRight: '1px solid #f0f0f0' }}>{pkt.id}</td>
                 <td style={{ padding: '12px 16px', borderRight: '1px solid #f0f0f0' }}>{pkt.channel}</td>
                 <td style={{ padding: '12px 16px', borderRight: '1px solid #f0f0f0' }}>
-                  <Pipeline packet={pkt} audit={pkt.audit} />
+                  <Pipeline packet={pkt} audit={pkt.audit} onStageClick={stage => handleStageClick(stage, pkt)} />
                 </td>
                 <td style={{ padding: '12px 16px', borderRight: '1px solid #f0f0f0' }}>{pkt.status}</td>
                 <td style={{ padding: '12px 16px' }}>{pkt.lastUpdate}</td>
@@ -238,6 +278,7 @@ export default function ProcessTracker() {
           </tbody>
         </table>
       </section>
+      <ApiDebugPanel open={debugOpen} onClose={() => setDebugOpen(false)} stageData={debugStageData} />
     </div>
   );
 }

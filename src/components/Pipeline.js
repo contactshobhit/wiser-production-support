@@ -26,7 +26,7 @@ const stageColors = {
   skipped: '#bbb',
 };
 
-const StageCircle = ({ status, tooltip }) => {
+const StageCircle = ({ status, tooltip, onClick }) => {
   let content;
   if (status === 'completed') content = <span style={{ color: 'white', fontWeight: 700 }}>✓</span>;
   else if (status === 'failed') content = <span style={{ color: 'white', fontWeight: 700 }}>✗</span>;
@@ -52,13 +52,13 @@ const StageCircle = ({ status, tooltip }) => {
   };
 
   return (
-    <div style={baseStyle} title={tooltip}>
+    <div style={baseStyle} title={tooltip} onClick={onClick}>
       {content}
     </div>
   );
 };
 
-const Pipeline = ({ packet, audit }) => {
+const Pipeline = ({ packet, audit, onStageClick }) => {
   // Simulated audit: [{ state: 'Received', time: '...' }, ...]
   return (
     <div style={{ display: 'flex', alignItems: 'center', minWidth: 180 }}>
@@ -72,7 +72,7 @@ const Pipeline = ({ packet, audit }) => {
         tooltip += `\nTime spent: 5m`;
         return (
           <React.Fragment key={stage}>
-            <StageCircle status={status} tooltip={tooltip} />
+            <StageCircle status={status} tooltip={tooltip} onClick={() => onStageClick && onStageClick(stage)} />
             {idx < STAGES.length - 1 && (
               <div style={{
                 height: 4,
@@ -87,6 +87,10 @@ const Pipeline = ({ packet, audit }) => {
       })}
     </div>
   );
+};
+
+Pipeline.defaultProps = {
+  onStageClick: () => {},
 };
 
 export default Pipeline;
