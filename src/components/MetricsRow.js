@@ -39,7 +39,16 @@ const MetricCard = ({ color, count, label, percent, direction, onClick }) => (
 );
 
 const MetricsRow = ({ metrics, onFilter }) => (
-  <div style={{ display: 'flex', gap: 0, margin: '18px 0 24px 0' }}>
+  <div
+    style={{
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: 0,
+      margin: '18px 0 24px 0',
+      width: '100%',
+      boxSizing: 'border-box',
+    }}
+  >
     {metrics.map((m, i) => (
       <MetricCard key={i} {...m} onClick={() => onFilter(m.filterType)} />
     ))}
