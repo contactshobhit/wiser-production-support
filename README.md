@@ -4,7 +4,7 @@ A comprehensive React-based production support dashboard for tracking and monito
 
 ## 🎯 Overview
 
-The Wiser Genzeon Production Support application is designed for production support teams to monitor and manage the complex prior authorization workflow. It integrates with multiple healthcare APIs and provides a unified interface for tracking packets through various stages of the authorization process.
+The Production Support application is designed for production support teams to monitor and manage the complex prior authorization workflow. It integrates with multiple healthcare APIs and provides a unified interface for tracking packets through various stages of the authorization process.
 
 ### Key Audiences
 
