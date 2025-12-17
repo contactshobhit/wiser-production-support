@@ -28,9 +28,42 @@ const iconStyles = {
 const icons = {
   view: <span role="img" aria-label="View Details">👁️</span>,
   retry: <span role="img" aria-label="Retry">🔄</span>,
-  override: <span role="img" aria-label="Override">➡️</span>,
+  override: <span role="img" aria-label="Override">⏭️</span>,
   download: <span role="img" aria-label="Download">⬇️</span>,
 };
+
+// Primary "View Details" button - more prominent styling
+function ViewDetailsButton({ onClick, tooltip }) {
+  const [hovered, setHovered] = React.useState(false);
+
+  return (
+    <button
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '6px 12px',
+        background: hovered ? '#007bff' : '#e3f0ff',
+        color: hovered ? '#fff' : '#007bff',
+        border: '1px solid #007bff',
+        borderRadius: 6,
+        fontSize: 13,
+        fontWeight: 600,
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+        boxShadow: hovered ? '0 2px 8px rgba(0,123,255,0.3)' : 'none',
+      }}
+      onClick={onClick}
+      title={tooltip}
+      aria-label={tooltip}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <span style={{ fontSize: 14 }}>👁️</span>
+      <span>View</span>
+    </button>
+  );
+}
 
 function ActionButton({ type, tooltip, onClick, disabled }) {
   const [hovered, setHovered] = React.useState(false);
@@ -67,22 +100,22 @@ export default function ActionsCell({ packet, onRetry, onView, onOverride, onDow
   const isCompleted = packet.status === 'Delivered';
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 4 }}>
+      {/* View Details is always first and most prominent */}
+      <ViewDetailsButton
+        onClick={() => onView(packet)}
+        tooltip="View Details: See full packet information, error logs and history"
+      />
+
+      {/* Secondary actions */}
       {isError && (
         <>
           <ActionButton type="retry" tooltip="Retry: Attempt to reprocess packet" onClick={() => onRetry(packet)} disabled={false} />
-          <ActionButton type="view" tooltip="View Details: See error logs and history" onClick={() => onView(packet)} disabled={false} />
-          <ActionButton type="override" tooltip="Override: Manually advance to next stage" onClick={() => onOverride(packet)} disabled={false} />
+          <ActionButton type="override" tooltip="Skip Stage: Manually advance to next stage (requires confirmation)" onClick={() => onOverride(packet)} disabled={false} />
         </>
       )}
       {isCompleted && (
-        <>
-          <ActionButton type="view" tooltip="View Details: See transaction history" onClick={() => onView(packet)} disabled={false} />
-          <ActionButton type="download" tooltip="Download: Export packet documentation" onClick={() => onDownload(packet)} disabled={false} />
-        </>
-      )}
-      {!isError && !isCompleted && (
-        <ActionButton type="view" tooltip="View Details" onClick={() => onView(packet)} disabled={false} />
+        <ActionButton type="download" tooltip="Download: Export packet documentation" onClick={() => onDownload(packet)} disabled={false} />
       )}
     </div>
   );

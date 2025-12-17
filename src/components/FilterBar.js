@@ -9,7 +9,7 @@ const STATUS_OPTIONS = [
 const CHANNEL_OPTIONS = [
   { key: 'Fax', label: 'Fax' },
   { key: 'eSMD', label: 'esMD' },
-  { key: 'Portal', label: 'Portal' },
+  { key: 'Provider Portal', label: 'Portal' },
 ];
 const DATE_OPTIONS = [
   { key: 'today', label: 'Today' },
@@ -18,7 +18,15 @@ const DATE_OPTIONS = [
   { key: 'custom', label: 'Custom' },
 ];
 
-function FilterBar({ filters, setFilters, resultCount, totalCount, onSearch, onClear, onAdvanced }) {
+// Map quick filter keys to labels
+const QUICK_FILTER_LABELS = {
+  critical: 'Critical Errors',
+  manual: 'Pending Manual Review',
+  processing: 'Processing Now',
+  completed: 'Completed Today',
+};
+
+function FilterBar({ filters, setFilters, resultCount, totalCount, onSearch, onClear, onAdvanced, quickFilter, onClearQuickFilter }) {
   const [search, setSearch] = useState(filters.search || '');
   const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -41,10 +49,238 @@ function FilterBar({ filters, setFilters, resultCount, totalCount, onSearch, onC
     onSearch(e.target.value);
   };
 
+  const handleClearAll = () => {
+    setSearch('');
+    onClear();
+    if (onClearQuickFilter) {
+      onClearQuickFilter();
+    }
+  };
+
   const activeCount = [search, ...filters.status, ...filters.channel, filters.date !== 'today' ? filters.date : null].filter(Boolean).length;
+  const hasQuickFilter = !!quickFilter;
+  const totalActiveFilters = activeCount + (hasQuickFilter ? 1 : 0);
 
   return (
     <div style={{ background: '#f8f9fa', borderRadius: 8, padding: '12px 20px', margin: '18px 0 12px 0', boxShadow: '0 1px 4px rgba(0,0,0,0.03)' }}>
+      {/* Active Filters Chips Row */}
+      {(hasQuickFilter || activeCount > 0) && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #e0e0e0' }}>
+          <span style={{ fontSize: 13, color: '#666', fontWeight: 500 }}>Active Filters:</span>
+
+          {/* Quick Filter Chip */}
+          {hasQuickFilter && (
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              background: '#007bff',
+              color: 'white',
+              borderRadius: 16,
+              padding: '4px 12px',
+              fontSize: 12,
+              fontWeight: 500,
+            }}>
+              {QUICK_FILTER_LABELS[quickFilter] || quickFilter}
+              <button
+                onClick={onClearQuickFilter}
+                style={{
+                  background: 'rgba(255,255,255,0.3)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: 16,
+                  height: 16,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: 'white',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  padding: 0,
+                }}
+                title="Remove filter"
+              >
+                ×
+              </button>
+            </span>
+          )}
+
+          {/* Search Chip */}
+          {search && (
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              background: '#6c757d',
+              color: 'white',
+              borderRadius: 16,
+              padding: '4px 12px',
+              fontSize: 12,
+              fontWeight: 500,
+            }}>
+              Search: "{search}"
+              <button
+                onClick={() => { setSearch(''); onSearch(''); }}
+                style={{
+                  background: 'rgba(255,255,255,0.3)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: 16,
+                  height: 16,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: 'white',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  padding: 0,
+                }}
+                title="Remove filter"
+              >
+                ×
+              </button>
+            </span>
+          )}
+
+          {/* Status Filter Chips */}
+          {filters.status.map(status => (
+            <span key={status} style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              background: '#28a745',
+              color: 'white',
+              borderRadius: 16,
+              padding: '4px 12px',
+              fontSize: 12,
+              fontWeight: 500,
+            }}>
+              {STATUS_OPTIONS.find(s => s.key === status)?.label || status}
+              <button
+                onClick={() => handleStatusToggle(status)}
+                style={{
+                  background: 'rgba(255,255,255,0.3)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: 16,
+                  height: 16,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: 'white',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  padding: 0,
+                }}
+                title="Remove filter"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+
+          {/* Channel Filter Chips */}
+          {filters.channel.map(channel => (
+            <span key={channel} style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              background: '#fd7e14',
+              color: 'white',
+              borderRadius: 16,
+              padding: '4px 12px',
+              fontSize: 12,
+              fontWeight: 500,
+            }}>
+              {CHANNEL_OPTIONS.find(c => c.key === channel)?.label || channel}
+              <button
+                onClick={() => handleChannelToggle(channel)}
+                style={{
+                  background: 'rgba(255,255,255,0.3)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: 16,
+                  height: 16,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: 'white',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  padding: 0,
+                }}
+                title="Remove filter"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+
+          {/* Date Filter Chip (if not default) */}
+          {filters.date !== 'today' && (
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              background: '#17a2b8',
+              color: 'white',
+              borderRadius: 16,
+              padding: '4px 12px',
+              fontSize: 12,
+              fontWeight: 500,
+            }}>
+              {DATE_OPTIONS.find(d => d.key === filters.date)?.label || filters.date}
+              <button
+                onClick={() => handleDateChange('today')}
+                style={{
+                  background: 'rgba(255,255,255,0.3)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: 16,
+                  height: 16,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: 'white',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  padding: 0,
+                }}
+                title="Remove filter"
+              >
+                ×
+              </button>
+            </span>
+          )}
+
+          {/* Clear All Button */}
+          <button
+            onClick={handleClearAll}
+            style={{
+              marginLeft: 'auto',
+              borderRadius: 16,
+              border: '1px solid #dc3545',
+              background: '#fff',
+              color: '#dc3545',
+              fontSize: 12,
+              fontWeight: 500,
+              padding: '4px 12px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+          >
+            <span>×</span> Clear All ({totalActiveFilters})
+          </button>
+        </div>
+      )}
+
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', marginBottom: 10 }}>
         {/* Quick search */}
         <input
@@ -111,19 +347,6 @@ function FilterBar({ filters, setFilters, resultCount, totalCount, onSearch, onC
         >
           Advanced filters
         </button>
-        {activeCount > 0 && (
-          <span style={{ background: '#007bff', color: 'white', borderRadius: 12, padding: '2px 10px', fontSize: 12, marginLeft: 8 }}>
-            {activeCount} filters applied
-          </span>
-        )}
-        {activeCount > 0 && (
-          <button
-            onClick={onClear}
-            style={{ borderRadius: 20, border: '1px solid #ccc', background: '#fff', color: '#444', fontSize: 13, padding: '6px 14px', marginLeft: 8, cursor: 'pointer' }}
-          >
-            Clear all
-          </button>
-        )}
         <span style={{ marginLeft: 'auto', fontSize: 13, color: '#888' }}>
           Showing {resultCount} of {totalCount} packets
         </span>
