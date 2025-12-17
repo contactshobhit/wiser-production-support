@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useSystemStatus } from '../hooks';
 
 // Helper for status dot
 const StatusDot = ({ color }) => (
@@ -15,17 +16,22 @@ const StatusDot = ({ color }) => (
 );
 
 const getStatusColor = (status) => {
-  if (status === 'connected' || status === 'valid') return '#28a745';
-  if (status === 'degraded') return '#ffc107';
+  if (status === 'connected' || status === 'valid' || status === 'ok') return '#28a745';
+  if (status === 'degraded' || status === 'unknown') return '#ffc107';
   return '#dc3545';
 };
 
-const SystemStatusBar = ({
-  esmdStatus = 'connected',
-  hetsStatus = 'connected',
-  s3LastSync = 5,
-  authTokenExpiry = 120,
-}) => {
+const SystemStatusBar = () => {
+  const { backend, pendingActions, loading, isBackendConnected } = useSystemStatus(30000);
+
+  // Calculate time since last check
+  const getTimeSinceCheck = () => {
+    if (!backend.lastChecked) return 'Never';
+    const diff = Math.floor((Date.now() - new Date(backend.lastChecked).getTime()) / 1000);
+    if (diff < 60) return `${diff}s ago`;
+    return `${Math.floor(diff / 60)}m ago`;
+  };
+
   return (
     <div style={{
       background: '#F8F9FA',
@@ -39,21 +45,28 @@ const SystemStatusBar = ({
       gap: 32,
     }}>
       <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <StatusDot color={getStatusColor(esmdStatus)} />
-        esMD API: <span style={{ color: '#888' }}>{esmdStatus === 'connected' ? 'Connected' : 'Disconnected'}</span>
+        <StatusDot color={getStatusColor(backend.status)} />
+        Backend API: <span style={{ color: '#888' }}>
+          {loading ? 'Checking...' : (isBackendConnected ? 'Connected' : backend.status)}
+        </span>
+        {backend.version && (
+          <span style={{ color: '#aaa', marginLeft: 4 }}>v{backend.version}</span>
+        )}
       </span>
       <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <StatusDot color={getStatusColor(hetsStatus)} />
-        HETS: <span style={{ color: '#888' }}>{hetsStatus === 'connected' ? 'Connected' : 'Disconnected'}</span>
+        <StatusDot color={getStatusColor(isBackendConnected ? 'connected' : 'down')} />
+        Last Check: <span style={{ color: '#888' }}>{getTimeSinceCheck()}</span>
       </span>
-      <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <StatusDot color={getStatusColor(s3LastSync < 15 ? 'connected' : 'degraded')} />
-        S3 Sync: <span style={{ color: '#888' }}>Last sync: {s3LastSync} min ago</span>
-      </span>
-      <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <StatusDot color={getStatusColor(authTokenExpiry > 10 ? 'valid' : 'degraded')} />
-        Auth Token: <span style={{ color: '#888' }}>{authTokenExpiry} min left</span>
-      </span>
+      {pendingActions.supportTickets > 0 && (
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#dc3545' }}>
+          Support Tickets: <strong>{pendingActions.supportTickets}</strong> pending
+        </span>
+      )}
+      {pendingActions.p2pCalls > 0 && (
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#fd7e14' }}>
+          P2P Calls: <strong>{pendingActions.p2pCalls}</strong> new
+        </span>
+      )}
     </div>
   );
 };

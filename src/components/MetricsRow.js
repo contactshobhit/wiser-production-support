@@ -14,7 +14,7 @@ const cardStyles = {
     alignItems: 'flex-start',
     cursor: 'pointer',
     borderLeft: '6px solid',
-    transition: 'box-shadow 0.2s',
+    transition: 'box-shadow 0.2s, transform 0.2s',
   },
   red: { borderColor: '#dc3545' },
   orange: { borderColor: '#fd7e14' },
@@ -22,15 +22,38 @@ const cardStyles = {
   green: { borderColor: '#28a745' },
 };
 
-const MetricCard = ({ color, count, label, percent, direction, onClick }) => (
+const MetricCard = ({ color, count, label, percent, direction, onClick, isActive }) => (
   <div
-    style={{ ...cardStyles.base, ...cardStyles[color] }}
+    style={{
+      ...cardStyles.base,
+      ...cardStyles[color],
+      boxShadow: isActive ? `0 4px 12px ${cardStyles[color].borderColor}40` : '0 1px 4px rgba(0,0,0,0.04)',
+      transform: isActive ? 'translateY(-2px)' : 'none',
+      background: isActive ? `${cardStyles[color].borderColor}10` : '#fff',
+      outline: isActive ? `2px solid ${cardStyles[color].borderColor}` : 'none',
+    }}
     onClick={onClick}
     tabIndex={0}
     aria-label={label}
+    aria-pressed={isActive}
     role="button"
   >
-    <div style={{ fontSize: 32, fontWeight: 700, color: cardStyles[color].borderColor }}>{count}</div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
+      <div style={{ fontSize: 32, fontWeight: 700, color: cardStyles[color].borderColor }}>{count}</div>
+      {isActive && (
+        <span style={{
+          marginLeft: 'auto',
+          background: cardStyles[color].borderColor,
+          color: 'white',
+          borderRadius: 12,
+          padding: '2px 8px',
+          fontSize: 10,
+          fontWeight: 600,
+        }}>
+          ACTIVE
+        </span>
+      )}
+    </div>
     <div style={{ fontSize: 14, color: '#444', marginTop: 4 }}>{label}</div>
     <div style={{ fontSize: 12, color: direction === 'up' ? '#28a745' : '#dc3545', marginTop: 2 }}>
       {direction === 'up' ? '↑' : '↓'}{percent}% from yesterday
@@ -38,7 +61,7 @@ const MetricCard = ({ color, count, label, percent, direction, onClick }) => (
   </div>
 );
 
-const MetricsRow = ({ metrics, onFilter }) => (
+const MetricsRow = ({ metrics, onFilter, activeFilter }) => (
   <div
     style={{
       display: 'flex',
@@ -50,7 +73,12 @@ const MetricsRow = ({ metrics, onFilter }) => (
     }}
   >
     {metrics.map((m, i) => (
-      <MetricCard key={i} {...m} onClick={() => onFilter(m.filterType)} />
+      <MetricCard
+        key={i}
+        {...m}
+        isActive={activeFilter === m.filterType}
+        onClick={() => onFilter(activeFilter === m.filterType ? null : m.filterType)}
+      />
     ))}
   </div>
 );
