@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MetricsRow from './MetricsRow';
 import ActionsCell from './ActionsCell';
 import Pipeline from './Pipeline';
@@ -6,6 +6,7 @@ import FilterBar from './FilterBar';
 import ApiDebugPanel from './ApiDebugPanel';
 import PacketDetailModal from './PacketDetailModal';
 import { getCriticalErrors, getPendingManualReview, getProcessingNow, getCompletedToday, filterPackets } from './processUtils';
+import api from '../services/api';
 
 const processStages = [
   'Packet Intake',
@@ -519,6 +520,41 @@ const getAging = (lastUpdate) => {
   return `${diffMins}m ago`;
 };
 
+// Transform API packet data to our format
+const transformApiPacket = (apiPacket, index) => {
+  // Map API status to our status
+  const statusMap = {
+    'pending': 'In Progress',
+    'in_review': 'Manual Correction',
+    'approved': 'Delivered',
+    'rejected': 'Manual Correction',
+  };
+
+  // Determine current stage based on status
+  const stageMap = {
+    'pending': 0,
+    'in_review': 5,
+    'approved': 8,
+    'rejected': 2,
+  };
+
+  const channels = ['Fax', 'eSMD', 'Provider Portal'];
+
+  return {
+    id: apiPacket.id,
+    channel: channels[index % 3],
+    currentStage: stageMap[apiPacket.status] || 0,
+    status: statusMap[apiPacket.status] || 'In Progress',
+    lastUpdate: new Date(apiPacket.updated_at).toLocaleString(),
+    // Additional data from API
+    patient: apiPacket.patient_name,
+    provider: apiPacket.referring_provider,
+    diagnosis: apiPacket.diagnosis,
+    insurance: apiPacket.insurance,
+    npi: apiPacket.referring_provider_npi,
+  };
+};
+
 export default function ProcessTracker() {
   const [packets, setPackets] = useState(samplePackets);
   const [filter, setFilter] = useState(null);
@@ -534,6 +570,73 @@ export default function ProcessTracker() {
 
   // State for action feedback
   const [actionFeedback, setActionFeedback] = useState(null);
+
+  // API loading state
+  const [loading, setLoading] = useState(true);
+  const [apiConnected, setApiConnected] = useState(false);
+  const [apiError, setApiError] = useState(null);
+
+  // Fetch packets from API on mount
+  useEffect(() => {
+    const fetchPackets = async () => {
+      try {
+        setLoading(true);
+
+        // First check if API is healthy
+        const healthResponse = await api.get('/health');
+        if (healthResponse.data?.status === 'ok') {
+          setApiConnected(true);
+        }
+
+        // Try to fetch packets from API
+        const response = await api.get('/api/packets', {
+          params: { page: 1, page_size: 50 }
+        });
+
+        if (response.data?.success && response.data?.data?.length > 0) {
+          // Transform API data to our format
+          const apiPackets = response.data.data.map(transformApiPacket);
+
+          // Merge with mock data for richer demo (API packets first, then mock)
+          const mergedPackets = [
+            ...apiPackets,
+            ...samplePackets.filter(mp => !apiPackets.find(ap => ap.id === mp.id))
+          ];
+
+          setPackets(mergedPackets);
+          setActionFeedback({
+            type: 'success',
+            message: `Connected to API - Loaded ${apiPackets.length} packets from backend`
+          });
+          setTimeout(() => setActionFeedback(null), 3000);
+        } else {
+          // No packets from API, use mock data
+          setPackets(samplePackets);
+          setActionFeedback({
+            type: 'info',
+            message: 'API connected but no packets found - Using demo data'
+          });
+          setTimeout(() => setActionFeedback(null), 3000);
+        }
+      } catch (error) {
+        console.log('API fetch failed, using mock data:', error);
+        setApiConnected(false);
+        setApiError(error.message || 'Failed to connect to API');
+        setPackets(samplePackets);
+
+        // Show info message about using demo data
+        setActionFeedback({
+          type: 'info',
+          message: 'Running in demo mode with sample data'
+        });
+        setTimeout(() => setActionFeedback(null), 3000);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPackets();
+  }, []);
 
   // Demo metric data
   const metrics = [
@@ -813,6 +916,33 @@ export default function ProcessTracker() {
           <span style={{ fontWeight: 500 }}>{actionFeedback.message}</span>
         </div>
       )}
+
+      {/* API Connection Status */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '8px 16px',
+        background: apiConnected ? '#f0fdf4' : '#fef3c7',
+        borderBottom: `1px solid ${apiConnected ? '#86efac' : '#fcd34d'}`,
+        fontSize: 13,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            background: apiConnected ? '#22c55e' : '#f59e0b',
+            animation: loading ? 'pulse 1s infinite' : 'none',
+          }} />
+          <span style={{ color: apiConnected ? '#166534' : '#92400e' }}>
+            {loading ? 'Connecting to API...' : apiConnected ? 'Connected to FastAPI Backend' : 'Demo Mode (Mock Data)'}
+          </span>
+        </div>
+        <span style={{ color: '#6b7280', fontSize: 12 }}>
+          {packets.length} packets loaded
+        </span>
+      </div>
 
       <MetricsRow metrics={metrics} onFilter={handleFilter} activeFilter={filter} />
       <FilterBar

@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 // API Configuration
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:4000';
-const API_TIMEOUT = parseInt(process.env.REACT_APP_API_TIMEOUT || '30000', 10);
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT || '30000', 10);
 
 // Create axios instance with default configuration
 const api = axios.create({
