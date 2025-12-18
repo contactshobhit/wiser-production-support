@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WISeR - Letter Generation - Prior Authorization Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* ===== WCAG 2.2 ACCESSIBILITY STYLES ===== */
+    
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+    
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: #3b82f6;
+      color: white;
+      padding: 8px 16px;
+      text-decoration: none;
+      font-weight: 600;
+      z-index: 9999;
+      border-radius: 0 0 4px 0;
+    }
+    
+    .skip-link:focus {
+      top: 0;
+    }
+    
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    [role="button"]:focus-visible,
+    [tabindex]:focus-visible {
+      outline: 3px solid #3b82f6;
+      outline-offset: 2px;
+    }
+    
+    button, a, [role="button"] {
+      min-height: 24px;
+      min-width: 24px;
+    }
+    
+    .text-gray-700 {
+      color: #6b7280 !important;
+    }
+    
+    .text-gray-600 {
+      color: #6b7280 !important;
+    }
+    
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    
+    *:focus-visible {
+      outline: 3px solid #3b82f6;
+      outline-offset: 2px;
+    }
+  </style>
+
+</head>
+<body class="bg-gray-50">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <div id="root"></div>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script type="text/babel">
+        const LetterGenerationScreen = () => {
+          const [letterType, setLetterType] = React.useState('');
+          const [letterContent, setLetterContent] = React.useState('');
+          const [isEditing, setIsEditing] = React.useState(false);
+          const [showSendDialog, setShowSendDialog] = React.useState(false);
+          const [sendingMethod, setSendingMethod] = React.useState([]);
+
+          // Get parameters from URL
+          const urlParams = new URLSearchParams(window.location.search);
+          const caseId = urlParams.get('caseId') || '076543356';
+          const suggestedDecision = urlParams.get('decision') || '';
+
+          // Mock case data
+          const caseData = {
+            uniqueId: '076543356',
+            caseId: '01232025_007643356',
+            patientName: 'Piyush Saxena',
+            patientAddress: '123 Main Street, Newark, NJ 07102',
+            memberId: '5',
+            providerName: 'SUNNY ORTHOPAEDIC SPECIALISTS PA',
+            providerAddress: '234567/8932, MRI: 5817142740',
+            providerPhone: '(555) 123-4567',
+            providerFax: '(555) 123-4568',
+            serviceType: 'TLSO Brace (Thoracic-Lumbar-Sacral Orthosis)',
+            hcpcs: 'L0450',
+            diagnosisCodes: ['M54.5 - Low back pain'],
+            dateOfService: '2025-12-01',
+            nurseReviewer: 'Sarah Wilson, RN',
+            mdReviewer: 'Dr. Michael Chen, MD',
+            reviewDate: '2025-02-05',
+            decision: 'Affirmed',
+            packetId: 'PKT-2025-001235',
+            intakeChannel: 'esMD'
+          };
+
+          const letterTemplates = {
+            approval: `[Organization Letterhead]
+
+PRIOR AUTHORIZATION APPROVAL
+
+Date: {{DATE}}
+Case ID: {{CASE_ID}}
+
+To: {{PROVIDER_NAME}}
+    {{PROVIDER_ADDRESS}}
+    Fax: {{PROVIDER_FAX}}
+
+Re: Prior Authorization Request - APPROVED
+    Patient: {{PATIENT_NAME}}
+    Member ID: {{MEMBER_ID}}
+    Service: {{SERVICE_TYPE}} ({{HCPCS}})
+
+Dear Provider,
+
+This letter confirms that the prior authorization request for the above-referenced patient has been APPROVED.
+
+SERVICE DETAILS:
+- HCPCS Code: {{HCPCS}}
+- Service Description: {{SERVICE_TYPE}}
+- Diagnosis Code(s): {{DIAGNOSIS_CODES}}
+- Date of Service: {{DATE_OF_SERVICE}}
+
+AUTHORIZATION DETAILS:
+- Authorization Number: AUTH-{{CASE_ID}}
+- Effective Date: {{REVIEW_DATE}}
+- Valid Through: {{EXPIRATION_DATE}}
+
+This authorization is valid for the specified service and timeframe only. Any changes to the service, equipment specifications, or patient condition may require a new prior authorization request.
+
+REQUIREMENTS:
+1. Service must be provided by a Medicare-enrolled provider
+2. Service must meet all Local Coverage Determination (LCD) criteria
+3. Documentation must be maintained per Medicare guidelines
+4. Claim submission must include this authorization number
+
+If you have questions regarding this authorization, please contact our clinical review department at 1-800-XXX-XXXX, reference Case ID {{CASE_ID}}.
+
+Sincerely,
+
+{{REVIEWER_NAME}}
+Clinical Review Team
+WISeR Program
+
+This determination was made in accordance with CMS guidelines and applicable Local Coverage Determinations.`,
+
+            denial: `[Organization Letterhead]
+
+PRIOR AUTHORIZATION DENIAL
+
+Date: {{DATE}}
+Case ID: {{CASE_ID}}
+
+To: {{PROVIDER_NAME}}
+    {{PROVIDER_ADDRESS}}
+    Fax: {{PROVIDER_FAX}}
+
+Re: Prior Authorization Request - DENIED
+    Patient: {{PATIENT_NAME}}
+    Member ID: {{MEMBER_ID}}
+    Service: {{SERVICE_TYPE}} ({{HCPCS}})
+
+Dear Provider,
+
+After careful review of the submitted documentation, we regret to inform you that the prior authorization request for the above-referenced patient has been DENIED.
+
+SERVICE DETAILS:
+- HCPCS Code: {{HCPCS}}
+- Service Description: {{SERVICE_TYPE}}
+- Diagnosis Code(s): {{DIAGNOSIS_CODES}}
+- Date of Service Requested: {{DATE_OF_SERVICE}}
+
+REASON FOR DENIAL:
+The submitted documentation does not meet the medical necessity requirements as defined in the applicable Local Coverage Determination (LCD). Specifically:
+
+• Missing required Written Order Prior to Delivery (WOPD) documentation
+• The WOPD is a mandatory element per LCD L35113 for Durable Medical Equipment
+• Without this documentation, the request cannot be approved under Medicare guidelines
+
+DOCUMENTATION REVIEWED:
+- Prior Authorization Request Form
+- Clinical notes and medical records
+- Supporting documentation
+
+NEXT STEPS - APPEAL RIGHTS:
+You have the right to appeal this determination. To initiate an appeal:
+
+1. Submit additional documentation addressing the deficiencies noted above
+2. Include a written statement explaining why the service meets medical necessity criteria
+3. Reference Case ID {{CASE_ID}} in all correspondence
+4. Submit within 60 days of this notice
+
+Appeals should be submitted to:
+WISeR Clinical Appeals
+P.O. Box XXXXX
+Newark, NJ 07102
+Fax: 1-800-XXX-XXXX
+
+ADDITIONAL INFORMATION:
+You may resubmit a new prior authorization request if additional documentation becomes available that addresses the deficiencies noted above.
+
+If you have questions regarding this determination, please contact our clinical review department at 1-800-XXX-XXXX, reference Case ID {{CASE_ID}}.
+
+Sincerely,
+
+{{REVIEWER_NAME}}
+Clinical Review Team
+WISeR Program
+
+This determination was made in accordance with CMS guidelines and applicable Local Coverage Determinations.`,
+
+            partial: `[Organization Letterhead]
+
+PRIOR AUTHORIZATION - PARTIAL APPROVAL
+
+Date: {{DATE}}
+Case ID: {{CASE_ID}}
+
+To: {{PROVIDER_NAME}}
+    {{PROVIDER_ADDRESS}}
+    Fax: {{PROVIDER_FAX}}
+
+Re: Prior Authorization Request - PARTIALLY APPROVED WITH ADJUSTMENTS
+    Patient: {{PATIENT_NAME}}
+    Member ID: {{MEMBER_ID}}
+    Service: {{SERVICE_TYPE}} ({{HCPCS}})
+
+Dear Provider,
+
+After review of the submitted documentation, the prior authorization request for the above-referenced patient has been PARTIALLY APPROVED with the following adjustments:
+
+SERVICE DETAILS:
+- HCPCS Code: {{HCPCS}}
+- Service Description: {{SERVICE_TYPE}}
+- Diagnosis Code(s): {{DIAGNOSIS_CODES}}
+- Date of Service: {{DATE_OF_SERVICE}}
+
+APPROVED WITH MODIFICATIONS:
+The following service is approved with modifications to meet medical necessity requirements:
+
+• [Specify approved modifications, quantity limits, or restrictions]
+• [Additional conditions or requirements]
+
+AUTHORIZATION DETAILS:
+- Authorization Number: AUTH-{{CASE_ID}}
+- Effective Date: {{REVIEW_DATE}}
+- Valid Through: {{EXPIRATION_DATE}}
+- Approved Quantity/Duration: [Specify]
+
+REQUIREMENTS:
+1. Service must be provided as specified in the approval modifications
+2. Service must be provided by a Medicare-enrolled provider
+3. Documentation must be maintained per Medicare guidelines
+4. Claim submission must include this authorization number
+
+NEXT STEPS - APPEAL RIGHTS:
+If you disagree with the modifications, you have the right to appeal. Please reference Case ID {{CASE_ID}} and submit additional documentation supporting the original request.
+
+If you have questions regarding this authorization, please contact our clinical review department at 1-800-XXX-XXXX.
+
+Sincerely,
+
+{{REVIEWER_NAME}}
+Clinical Review Team
+WISeR Program
+
+This determination was made in accordance with CMS guidelines and applicable Local Coverage Determinations.`,
+
+            needMoreInfo: `[Organization Letterhead]
+
+PRIOR AUTHORIZATION - ADDITIONAL INFORMATION REQUIRED
+
+Date: {{DATE}}
+Case ID: {{CASE_ID}}
+
+To: {{PROVIDER_NAME}}
+    {{PROVIDER_ADDRESS}}
+    Fax: {{PROVIDER_FAX}}
+
+Re: Prior Authorization Request - PENDING ADDITIONAL INFORMATION
+    Patient: {{PATIENT_NAME}}
+    Member ID: {{MEMBER_ID}}
+    Service: {{SERVICE_TYPE}} ({{HCPCS}})
+
+Dear Provider,
+
+We have received your prior authorization request for the above-referenced patient. However, we require additional information to complete our review and make a determination.
+
+SERVICE DETAILS:
+- HCPCS Code: {{HCPCS}}
+- Service Description: {{SERVICE_TYPE}}
+- Diagnosis Code(s): {{DIAGNOSIS_CODES}}
+- Date of Service Requested: {{DATE_OF_SERVICE}}
+
+REQUIRED INFORMATION:
+To proceed with the review, please provide the following additional documentation:
+
+• [Specific document or information needed]
+• [Additional requirements]
+• [Clarifications needed]
+
+SUBMISSION INSTRUCTIONS:
+Please submit the requested information within 14 days to avoid delay in processing. You may submit via:
+
+- Fax: 1-800-XXX-XXXX (Reference Case ID {{CASE_ID}})
+- Secure Portal: [Portal URL]
+- esMD Transaction (if applicable)
+
+IMPORTANT: Please reference Case ID {{CASE_ID}} on all correspondence and documentation.
+
+TIMELINE:
+- Submission Deadline: [14 days from date]
+- If information is not received within 14 days, this request may be closed and require resubmission
+- Upon receipt of complete information, review will be completed within 2 business days
+
+If you have questions regarding this request, please contact our clinical review department at 1-800-XXX-XXXX, reference Case ID {{CASE_ID}}.
+
+Sincerely,
+
+{{REVIEWER_NAME}}
+Clinical Review Team
+WISeR Program
+
+This determination process follows CMS guidelines and applicable Local Coverage Determinations.`
+          };
+
+          const populateLetter = (template, decision) => {
+            const today = new Date();
+            const expirationDate = new Date(today);
+            expirationDate.setMonth(expirationDate.getMonth() + 6);
+
+            let content = template
+              .replace(/{{DATE}}/g, today.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }))
+              .replace(/{{CASE_ID}}/g, caseData.caseId)
+              .replace(/{{PROVIDER_NAME}}/g, caseData.providerName)
+              .replace(/{{PROVIDER_ADDRESS}}/g, caseData.providerAddress)
+              .replace(/{{PROVIDER_FAX}}/g, caseData.providerFax)
+              .replace(/{{PATIENT_NAME}}/g, caseData.patientName)
+              .replace(/{{MEMBER_ID}}/g, caseData.memberId)
+              .replace(/{{SERVICE_TYPE}}/g, caseData.serviceType)
+              .replace(/{{HCPCS}}/g, caseData.hcpcs)
+              .replace(/{{DIAGNOSIS_CODES}}/g, caseData.diagnosisCodes.join(', '))
+              .replace(/{{DATE_OF_SERVICE}}/g, caseData.dateOfService)
+              .replace(/{{REVIEW_DATE}}/g, caseData.reviewDate)
+              .replace(/{{EXPIRATION_DATE}}/g, expirationDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }))
+              .replace(/{{REVIEWER_NAME}}/g, caseData.mdReviewer || caseData.nurseReviewer);
+
+            return content;
+          };
+
+          const handleSelectLetterType = (type) => {
+            setLetterType(type);
+            setLetterContent(populateLetter(letterTemplates[type], caseData.decision));
+            setIsEditing(false);
+          };
+
+          const handleSendLetter = () => {
+            alert('Letter submitted to delivery queue. Automated delivery will be processed via WestFax, Provider Portal, esMD, and Member Mailroom. Operations team will monitor for any exceptions.');
+            window.location.href = 'FINAL_clinical_review_dashboard.html';
+          };
+
+          const toggleSendingMethod = (method) => {
+            if (sendingMethod.includes(method)) {
+              setSendingMethod(sendingMethod.filter(m => m !== method));
+            } else {
+              setSendingMethod([...sendingMethod, method]);
+            }
+          };
+
+          React.useEffect(() => {
+            if (suggestedDecision === 'approve') {
+              handleSelectLetterType('approval');
+            } else if (suggestedDecision === 'deny') {
+              handleSelectLetterType('denial');
+            }
+          }, []);
+
+          return (
+            <div className="min-h-screen bg-gray-50 p-6">
+              {/* Breadcrumb Navigation */}
+              <div className="mb-6">
+                <nav className="flex items-center space-x-2 text-sm">
+                  <a href="FINAL_clinical_review_dashboard.html" className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
+                    <span>←</span> Back to Clinical Review Dashboard
+                  </a>
+                  <span className="text-gray-600">/</span>
+                  <span className="text-gray-700">Letter Generation: {caseData.uniqueId}</span>
+                </nav>
+              </div>
+
+              {/* Header */}
+              <div className="bg-white rounded-lg shadow mb-6 p-6">
+                <h1 id="main-content" className="text-2xl font-bold text-gray-900">Letter Generation</h1>
+                <p className="text-gray-600 mt-1">Case {caseData.uniqueId} - {caseData.patientName}</p>
+                <div className="mt-3 flex items-center gap-4 text-sm">
+                  <span className="text-gray-600">Provider: <strong>{caseData.providerName}</strong></span>
+                  <span className="text-gray-600">Service: <strong>{caseData.hcpcs} - {caseData.serviceType}</strong></span>
+                  <span className="text-gray-600">Decision: <strong className="text-green-700">{caseData.decision}</strong></span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-6">
+                {/* Left Column - Letter Type Selection */}
+                <div className="space-y-6">
+                  <div className="bg-white rounded-lg shadow p-6">
+                    <h2 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">Select Letter Template</h2>
+                    
+                    <div className="space-y-3">
+                      <button
+                        onClick={() => handleSelectLetterType('approval')}
+                        className={`w-full text-left p-4 rounded border-2 transition-colors ${
+                          letterType === 'approval'
+                            ? 'border-green-500 bg-green-50'
+                            : 'border-gray-200 hover:border-green-300'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="text-2xl">✅</div>
+                          <div>
+                            <div className="font-semibold text-gray-900">Approval Letter</div>
+                            <div className="text-sm text-gray-600 mt-1">
+                              Service meets all medical necessity criteria
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+
+                      <button
+                        onClick={() => handleSelectLetterType('denial')}
+                        className={`w-full text-left p-4 rounded border-2 transition-colors ${
+                          letterType === 'denial'
+                            ? 'border-red-500 bg-red-50'
+                            : 'border-gray-200 hover:border-red-300'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="text-2xl">❌</div>
+                          <div>
+                            <div className="font-semibold text-gray-900">Denial Letter</div>
+                            <div className="text-sm text-gray-600 mt-1">
+                              Service does not meet medical necessity criteria
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+
+                      <button
+                        onClick={() => handleSelectLetterType('partial')}
+                        className={`w-full text-left p-4 rounded border-2 transition-colors ${
+                          letterType === 'partial'
+                            ? 'border-yellow-500 bg-yellow-50'
+                            : 'border-gray-200 hover:border-yellow-300'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="text-2xl">📋</div>
+                          <div>
+                            <div className="font-semibold text-gray-900">Partial Approval</div>
+                            <div className="text-sm text-gray-600 mt-1">
+                              Service approved with modifications or limits
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+
+                      <button
+                        onClick={() => handleSelectLetterType('needMoreInfo')}
+                        className={`w-full text-left p-4 rounded border-2 transition-colors ${
+                          letterType === 'needMoreInfo'
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-blue-300'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="text-2xl">📄</div>
+                          <div>
+                            <div className="font-semibold text-gray-900">Request More Information</div>
+                            <div className="text-sm text-gray-600 mt-1">
+                              Additional documentation needed to complete review
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Case Summary */}
+                  <div className="bg-white rounded-lg shadow p-6">
+                    <h2 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b">Case Summary</h2>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Packet ID:</span>
+                        <a href={`FINAL_packet_detail_view.html?id=${caseData.packetId}`} className="text-blue-600 hover:text-blue-800 font-medium">
+                          {caseData.packetId}
+                        </a>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Intake Channel:</span>
+                        <span className="font-semibold">{caseData.intakeChannel}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Nurse Reviewer:</span>
+                        <span className="font-semibold">{caseData.nurseReviewer}</span>
+                      </div>
+                      {caseData.mdReviewer && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">MD Reviewer:</span>
+                          <span className="font-semibold">{caseData.mdReviewer}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Review Date:</span>
+                        <span className="font-semibold">{caseData.reviewDate}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Middle & Right Columns - Letter Preview */}
+                <div className="col-span-2 bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center justify-between mb-4 pb-4 border-b">
+                    <h2 className="text-lg font-bold text-gray-900">
+                      {letterType ? `${letterType.charAt(0).toUpperCase() + letterType.slice(1)} Letter Preview` : 'Select a Letter Template'}
+                    </h2>
+                    {letterType && (
+                      <div className="flex gap-2">
+                        {!isEditing && (
+                          <button
+                            onClick={() => setIsEditing(true)}
+                            className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 text-sm"
+                          >
+                            ✏️ Edit Letter
+                          </button>
+                        )}
+                        {isEditing && (
+                          <button
+                            onClick={() => setIsEditing(false)}
+                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                          >
+                            Save Changes
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setShowSendDialog(true)}
+                          className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-semibold text-sm"
+                        >
+                          Send Letter →
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {!letterType && (
+                    <div className="text-center py-20 text-gray-700">
+                      <div className="text-6xl mb-4">📝</div>
+                      <p className="text-lg">Please select a letter template from the left panel</p>
+                    </div>
+                  )}
+
+                  {letterType && (
+                    <div className="bg-white border-2 border-gray-300 rounded p-8 shadow-inner">
+                      {isEditing ? (
+                        <textarea
+                          value={letterContent}
+                          onChange={(e) => setLetterContent(e.target.value)}
+                          className="w-full h-[600px] border border-gray-300 rounded p-4 font-mono text-sm focus:ring-2 focus:ring-blue-500"
+                        />
+                      ) : (
+                        <div className="whitespace-pre-wrap font-serif text-sm leading-relaxed" style={{maxHeight: '600px', overflowY: 'auto'}}>
+                          {letterContent}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Send Dialog */}
+              {showSendDialog && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-lg shadow-xl p-6 max-w-md">
+                    <h3 className="text-xl font-bold text-gray-900 mb-4">Submit Letter for Delivery</h3>
+                    
+                    <p className="text-sm text-gray-700 mb-4">
+                      This letter will be automatically delivered to <strong>{caseData.providerName}</strong> and the member via:
+                    </p>
+
+                    <div className="space-y-2 mb-6 bg-gray-50 rounded p-3">
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-green-600">✓</span>
+                        <span><strong>Provider Letter:</strong> WestFax to {caseData.providerFax}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-green-600">✓</span>
+                        <span><strong>Provider Portal:</strong> Automatic upload</span>
+                      </div>
+                      {caseData.intakeChannel === 'esMD' && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="text-green-600">✓</span>
+                          <span><strong>esMD to MAC:</strong> Return transaction</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="text-green-600">✓</span>
+                        <span><strong>Member Letter:</strong> Print & mail via mailroom</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-6 text-sm text-blue-800">
+                      <strong>Note:</strong> Operations team will monitor delivery status. You will be notified if any delivery failures occur.
+                    </div>
+
+                    <div className="flex gap-3">
+                      <button
+                        onClick={handleSendLetter}
+                        className="flex-1 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 font-semibold"
+                      >
+                        Submit for Delivery Queue
+                      </button>
+                      <button
+                        onClick={() => setShowSendDialog(false)}
+                        className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Bottom Actions */}
+              <div className="flex gap-3 mt-6">
+                <a
+                  href="FINAL_clinical_review_dashboard.html"
+                  className="bg-gray-200 text-gray-700 px-6 py-3 rounded hover:bg-gray-300 font-semibold flex items-center gap-2"
+                >
+                  <span>←</span> Back to Dashboard
+                </a>
+                <button className="border border-gray-300 px-6 py-3 rounded hover:bg-gray-50">
+                  Save Draft
+                </button>
+                <button className="border border-gray-300 px-6 py-3 rounded hover:bg-gray-50">
+                  Download PDF
+                </button>
+              </div>
+            </div>
+          );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<LetterGenerationScreen />);
+    </script>
+</body>
+</html>

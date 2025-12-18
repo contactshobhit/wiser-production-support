@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WISeR - Analytics & Aging Dashboard - Prior Authorization Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* ===== WCAG 2.2 ACCESSIBILITY STYLES ===== */
+    
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+    
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: #3b82f6;
+      color: white;
+      padding: 8px 16px;
+      text-decoration: none;
+      font-weight: 600;
+      z-index: 9999;
+      border-radius: 0 0 4px 0;
+    }
+    
+    .skip-link:focus {
+      top: 0;
+    }
+    
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    [role="button"]:focus-visible,
+    [tabindex]:focus-visible {
+      outline: 3px solid #3b82f6;
+      outline-offset: 2px;
+    }
+    
+    button, a, [role="button"] {
+      min-height: 24px;
+      min-width: 24px;
+    }
+    
+    .text-gray-700 {
+      color: #6b7280 !important;
+    }
+    
+    .text-gray-600 {
+      color: #6b7280 !important;
+    }
+    
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+    
+    *:focus-visible {
+      outline: 3px solid #3b82f6;
+      outline-offset: 2px;
+    }
+  </style>
+
+</head>
+<body class="bg-gray-50">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <div id="root"></div>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script type="text/babel">
+        const AnalyticsDashboard = () => {
+          const [viewMode, setViewMode] = React.useState('all');
+
+          // Sample data with hybrid status and aging
+          const packets = [
+            {
+              id: 'PKT-2025-001234',
+              receivedDate: '2025-12-01 09:00',
+              highLevelStatus: 'Intake Processing',
+              intakeStatus: 'Manual Review',
+              clinicalStatus: null,
+              deliveryStatus: null,
+              patient: 'John Smith',
+              provider: 'ABC Medical',
+              service: 'L0450',
+              priority: 'Standard',
+              channel: 'Fax',
+              currentAge: 6,
+              intakeAge: 6,
+              clinicalAge: null,
+              deliveryAge: null,
+              slaTarget: 2,
+              overSla: true
+            },
+            {
+              id: 'PKT-2025-001235',
+              receivedDate: '2025-12-03 14:00',
+              highLevelStatus: 'Clinical Review',
+              intakeStatus: 'Case Created',
+              clinicalStatus: 'In Progress',
+              deliveryStatus: null,
+              patient: 'Mary Johnson',
+              provider: 'XYZ Health',
+              service: 'L0454',
+              priority: 'Standard',
+              channel: 'esMD',
+              currentAge: 4,
+              intakeAge: 1,
+              clinicalAge: 3,
+              deliveryAge: null,
+              slaTarget: 3,
+              overSla: false
+            },
+            {
+              id: 'PKT-2025-001236',
+              receivedDate: '2025-11-28 11:00',
+              highLevelStatus: 'Clinical Review',
+              intakeStatus: 'Case Created',
+              clinicalStatus: 'MD Review',
+              deliveryStatus: null,
+              patient: 'Robert Williams',
+              provider: 'City Ortho',
+              service: 'L0631',
+              priority: 'High',
+              channel: 'Portal',
+              currentAge: 9,
+              intakeAge: 1.2,
+              clinicalAge: 7.8,
+              deliveryAge: null,
+              slaTarget: 5,
+              overSla: true
+            },
+            {
+              id: 'PKT-2025-001237',
+              receivedDate: '2025-12-05 08:00',
+              highLevelStatus: 'Delivery In Progress',
+              intakeStatus: 'Case Created',
+              clinicalStatus: 'Completed',
+              deliveryStatus: 'Fax In Progress',
+              patient: 'Sarah Davis',
+              provider: 'County Medical',
+              service: 'L0450',
+              priority: 'Standard',
+              channel: 'Fax',
+              currentAge: 2,
+              intakeAge: 0.3,
+              clinicalAge: 0.9,
+              deliveryAge: 0.8,
+              slaTarget: 0.5,
+              overSla: true
+            },
+            {
+              id: 'PKT-2025-001238',
+              receivedDate: '2025-12-02 10:00',
+              highLevelStatus: 'Closed - Delivered',
+              intakeStatus: 'Case Created',
+              clinicalStatus: 'Completed',
+              deliveryStatus: 'Sent',
+              patient: 'James Brown',
+              provider: 'Valley Spine',
+              service: 'L0972',
+              priority: 'Standard',
+              channel: 'Mailroom',
+              currentAge: 5,
+              intakeAge: 0.9,
+              clinicalAge: 2.1,
+              deliveryAge: 0.04,
+              totalTime: 3.04,
+              slaTarget: 5,
+              overSla: false
+            },
+            {
+              id: 'PKT-2025-001239',
+              receivedDate: '2025-11-30 13:00',
+              highLevelStatus: 'Intake Processing',
+              intakeStatus: 'Validating',
+              clinicalStatus: null,
+              deliveryStatus: null,
+              patient: 'Patricia Miller',
+              provider: 'Regional Health',
+              service: 'L0450',
+              priority: 'Standard',
+              channel: 'esMD',
+              currentAge: 7,
+              intakeAge: 7,
+              clinicalAge: null,
+              deliveryAge: null,
+              slaTarget: 2,
+              overSla: true
+            },
+            {
+              id: 'PKT-2025-001240',
+              receivedDate: '2025-12-04 15:00',
+              highLevelStatus: 'Clinical Review',
+              intakeStatus: 'Case Created',
+              clinicalStatus: 'Pending Review',
+              deliveryStatus: null,
+              patient: 'Michael Garcia',
+              provider: 'Metro Clinic',
+              service: 'L1832',
+              priority: 'Expedited',
+              channel: 'Portal',
+              currentAge: 3,
+              intakeAge: 0.8,
+              clinicalAge: 2.2,
+              deliveryAge: null,
+              slaTarget: 1.5,
+              overSla: true
+            },
+            {
+              id: 'PKT-2025-001241',
+              receivedDate: '2025-12-01 16:00',
+              highLevelStatus: 'Closed - Delivered',
+              intakeStatus: 'Case Created',
+              clinicalStatus: 'Completed',
+              deliveryStatus: 'Sent',
+              patient: 'Lisa Anderson',
+              provider: 'North Medical',
+              service: 'L0450',
+              priority: 'Standard',
+              channel: 'Fax',
+              currentAge: 6,
+              intakeAge: 0.8,
+              clinicalAge: 1.9,
+              deliveryAge: 0.04,
+              totalTime: 2.74,
+              slaTarget: 5,
+              overSla: false
+            }
+          ];
+
+          // Calculate metrics
+          const metrics = {
+            total: packets.length,
+            intakeProcessing: packets.filter(p => p.highLevelStatus === 'Intake Processing').length,
+            clinicalReview: packets.filter(p => p.highLevelStatus === 'Clinical Review').length,
+            deliveryInProgress: packets.filter(p => p.highLevelStatus === 'Delivery In Progress').length,
+            closed: packets.filter(p => p.highLevelStatus.startsWith('Closed')).length,
+            
+            overSlaIntake: packets.filter(p => p.highLevelStatus === 'Intake Processing' && p.overSla).length,
+            overSlaClinical: packets.filter(p => p.highLevelStatus === 'Clinical Review' && p.overSla).length,
+            overSlaDelivery: packets.filter(p => p.highLevelStatus === 'Delivery In Progress' && p.overSla).length,
+            
+            avgIntakeTime: packets.filter(p => p.intakeAge && p.intakeStatus === 'Case Created').reduce((sum, p) => sum + p.intakeAge, 0) / 
+                          Math.max(packets.filter(p => p.intakeAge && p.intakeStatus === 'Case Created').length, 1),
+            avgClinicalTime: packets.filter(p => p.clinicalAge && p.clinicalStatus === 'Completed').reduce((sum, p) => sum + p.clinicalAge, 0) / 
+                            Math.max(packets.filter(p => p.clinicalAge && p.clinicalStatus === 'Completed').length, 1),
+            avgDeliveryTime: packets.filter(p => p.deliveryAge && p.deliveryStatus === 'Sent').reduce((sum, p) => sum + p.deliveryAge, 0) / 
+                            Math.max(packets.filter(p => p.deliveryAge && p.deliveryStatus === 'Sent').length, 1),
+            avgTotalTime: packets.filter(p => p.totalTime).reduce((sum, p) => sum + p.totalTime, 0) / 
+                         Math.max(packets.filter(p => p.totalTime).length, 1)
+          };
+
+          const filteredPackets = packets.filter(p => {
+            if (viewMode === 'intake') return p.highLevelStatus === 'Intake Processing';
+            if (viewMode === 'clinical') return p.highLevelStatus === 'Clinical Review';
+            if (viewMode === 'delivery') return p.highLevelStatus === 'Delivery In Progress';
+            return true;
+          });
+
+          const formatDays = (days) => {
+            if (!days && days !== 0) return '-';
+            if (days < 1) return `${Math.round(days * 24)}h`;
+            return `${days.toFixed(1)}d`;
+          };
+
+          return (
+            <div className="min-h-screen bg-gray-50 p-6">
+              {/* Breadcrumb */}
+              <div className="mb-6">
+                <nav className="flex items-center space-x-2 text-sm">
+                  <a href="FINAL_packets_dashboard.html" className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1" aria-label="Return to main dashboard">
+                    <span>←</span> Back to Dashboard
+                  </a>
+                  <span className="text-gray-600">/</span>
+                  <span className="text-gray-700">Analytics & Aging</span>
+                </nav>
+              </div>
+
+              {/* Header */}
+              <div className="mb-6">
+                <h1 id="main-content" className="text-3xl font-bold text-gray-900">Analytics & Aging Dashboard</h1>
+                <p className="text-gray-600 mt-1">Monitor aging and bottlenecks across all three phases (Intake → Clinical → Delivery)</p>
+              </div>
+
+              {/* High-Level Status Overview */}
+              <div className="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-4">📊 High-Level Status Distribution (Click to Filter)</h2>
+                <div className="grid grid-cols-5 gap-4">
+                  <button
+                    onClick={() => setViewMode('intake')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setViewMode('intake');
+                      }
+                    }}
+                    className={`bg-amber-50 rounded-lg p-4 border-l-4 border-amber-500 text-left transition-all cursor-pointer hover:shadow-lg hover:scale-105 ${
+                      viewMode === 'intake' ? 'ring-2 ring-amber-400 shadow-lg' : ''
+                    }`}
+                    aria-label={`Filter to Intake Processing cases. ${metrics.intakeProcessing} cases total${metrics.overSlaIntake > 0 ? `, ${metrics.overSlaIntake} over SLA` : ''}`}
+                  >
+                    <div className="text-2xl font-bold text-amber-900">{metrics.intakeProcessing}</div>
+                    <div className="text-sm text-amber-700">Intake Processing</div>
+                    {metrics.overSlaIntake > 0 && (
+                      <div className="text-xs text-red-600 mt-1 font-semibold">⚠️ {metrics.overSlaIntake} over SLA</div>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setViewMode('clinical')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setViewMode('clinical');
+                      }
+                    }}
+                    className={`bg-purple-50 rounded-lg p-4 border-l-4 border-purple-500 text-left transition-all cursor-pointer hover:shadow-lg hover:scale-105 ${
+                      viewMode === 'clinical' ? 'ring-2 ring-purple-400 shadow-lg' : ''
+                    }`}
+                    aria-label={`Filter to Clinical Review cases. ${metrics.clinicalReview} cases total${metrics.overSlaClinical > 0 ? `, ${metrics.overSlaClinical} over SLA` : ''}`}
+                  >
+                    <div className="text-2xl font-bold text-purple-900">{metrics.clinicalReview}</div>
+                    <div className="text-sm text-purple-700">Clinical Review</div>
+                    {metrics.overSlaClinical > 0 && (
+                      <div className="text-xs text-red-600 mt-1 font-semibold">⚠️ {metrics.overSlaClinical} over SLA</div>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setViewMode('delivery')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setViewMode('delivery');
+                      }
+                    }}
+                    className={`bg-orange-50 rounded-lg p-4 border-l-4 border-orange-500 text-left transition-all cursor-pointer hover:shadow-lg hover:scale-105 ${
+                      viewMode === 'delivery' ? 'ring-2 ring-orange-400 shadow-lg' : ''
+                    }`}
+                    aria-label={`Filter to Delivery In Progress cases. ${metrics.deliveryInProgress} cases total${metrics.overSlaDelivery > 0 ? `, ${metrics.overSlaDelivery} over SLA` : ''}`}
+                  >
+                    <div className="text-2xl font-bold text-orange-900">{metrics.deliveryInProgress}</div>
+                    <div className="text-sm text-orange-700">Delivery In Progress</div>
+                    {metrics.overSlaDelivery > 0 && (
+                      <div className="text-xs text-red-600 mt-1 font-semibold">⚠️ {metrics.overSlaDelivery} over SLA</div>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setViewMode('all')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setViewMode('all');
+                      }
+                    }}
+                    className={`bg-green-50 rounded-lg p-4 border-l-4 border-green-500 text-left transition-all cursor-pointer hover:shadow-lg hover:scale-105 ${
+                      viewMode === 'all' ? 'ring-2 ring-green-400 shadow-lg' : ''
+                    }`}
+                    aria-label={`Show all closed cases. ${metrics.closed} cases completed`}
+                  >
+                    <div className="text-2xl font-bold text-green-900">{metrics.closed}</div>
+                    <div className="text-sm text-green-700">Closed</div>
+                    <div className="text-xs text-green-600 mt-1">Completed</div>
+                  </button>
+                  <button
+                    onClick={() => setViewMode('all')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setViewMode('all');
+                      }
+                    }}
+                    className={`bg-blue-50 rounded-lg p-4 border-l-4 border-blue-500 text-left transition-all cursor-pointer hover:shadow-lg hover:scale-105 ${
+                      viewMode === 'all' ? 'ring-2 ring-blue-400 shadow-lg' : ''
+                    }`}
+                    aria-label={`Show all active cases. ${metrics.total} cases in last 7 days`}
+                  >
+                    <div className="text-2xl font-bold text-blue-900">{metrics.total}</div>
+                    <div className="text-sm text-blue-700">Total Active</div>
+                    <div className="text-xs text-blue-600 mt-1">Last 7 days</div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Average Time by Phase */}
+              <div className="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-4">⏱️ Average Time by Phase</h2>
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="border rounded-lg p-4 bg-amber-50">
+                    <div className="text-sm text-gray-600 mb-1">Intake Phase</div>
+                    <div className="text-3xl font-bold text-amber-900">{formatDays(metrics.avgIntakeTime)}</div>
+                    <div className="text-xs text-gray-700 mt-1">Target: 2 days</div>
+                    <div className={`text-xs mt-2 font-semibold ${metrics.avgIntakeTime > 2 ? 'text-red-600' : 'text-green-600'}`}>
+                      {metrics.avgIntakeTime > 2 ? '⚠️ Above target' : '✓ Within target'}
+                    </div>
+                  </div>
+                  <div className="border rounded-lg p-4 bg-purple-50">
+                    <div className="text-sm text-gray-600 mb-1">Clinical Phase</div>
+                    <div className="text-3xl font-bold text-purple-900">{formatDays(metrics.avgClinicalTime)}</div>
+                    <div className="text-xs text-gray-700 mt-1">Target: 3 days</div>
+                    <div className={`text-xs mt-2 font-semibold ${metrics.avgClinicalTime > 3 ? 'text-red-600' : 'text-green-600'}`}>
+                      {metrics.avgClinicalTime > 3 ? '⚠️ Above target' : '✓ Within target'}
+                    </div>
+                  </div>
+                  <div className="border rounded-lg p-4 bg-orange-50">
+                    <div className="text-sm text-gray-600 mb-1">Delivery Phase</div>
+                    <div className="text-3xl font-bold text-orange-900">{formatDays(metrics.avgDeliveryTime)}</div>
+                    <div className="text-xs text-gray-700 mt-1">Target: 12 hours</div>
+                    <div className={`text-xs mt-2 font-semibold ${metrics.avgDeliveryTime > 0.5 ? 'text-red-600' : 'text-green-600'}`}>
+                      {metrics.avgDeliveryTime > 0.5 ? '⚠️ Above target' : '✓ Within target'}
+                    </div>
+                  </div>
+                  <div className="border rounded-lg p-4 bg-blue-50">
+                    <div className="text-sm text-gray-600 mb-1">End-to-End</div>
+                    <div className="text-3xl font-bold text-blue-900">{formatDays(metrics.avgTotalTime)}</div>
+                    <div className="text-xs text-gray-700 mt-1">Target: 5 days</div>
+                    <div className={`text-xs mt-2 font-semibold ${metrics.avgTotalTime > 5 ? 'text-red-600' : 'text-green-600'}`}>
+                      {metrics.avgTotalTime > 5 ? '⚠️ Above target' : '✓ Within target'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* View Mode Filter */}
+              <div className="bg-white rounded-lg shadow p-4 mb-6">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setViewMode('all')}
+                    className={`px-4 py-2 rounded transition-colors ${
+                      viewMode === 'all' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    All Phases
+                  </button>
+                  <button
+                    onClick={() => setViewMode('intake')}
+                    className={`px-4 py-2 rounded transition-colors ${
+                      viewMode === 'intake' 
+                        ? 'bg-amber-600 text-white' 
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    Intake Only ({metrics.intakeProcessing})
+                  </button>
+                  <button
+                    onClick={() => setViewMode('clinical')}
+                    className={`px-4 py-2 rounded transition-colors ${
+                      viewMode === 'clinical' 
+                        ? 'bg-purple-600 text-white' 
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    Clinical Only ({metrics.clinicalReview})
+                  </button>
+                  <button
+                    onClick={() => setViewMode('delivery')}
+                    className={`px-4 py-2 rounded transition-colors ${
+                      viewMode === 'delivery' 
+                        ? 'bg-orange-600 text-white' 
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    Delivery Only ({metrics.deliveryInProgress})
+                  </button>
+                </div>
+              </div>
+
+              {/* Aging Table */}
+              <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className="p-4 bg-gray-50 border-b">
+                  <h2 className="text-lg font-bold text-gray-900">
+                    {viewMode === 'all' && '🕐 All Cases - Aging Analysis'}
+                    {viewMode === 'intake' && '🕐 Intake Phase - Aging Analysis'}
+                    {viewMode === 'clinical' && '🕐 Clinical Phase - Aging Analysis'}
+                    {viewMode === 'delivery' && '🕐 Delivery Phase - Aging Analysis'}
+                  </h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Showing {filteredPackets.length} case(s) | Sorted by aging (oldest first)
+                  </p>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                  <caption class="sr-only">Data table</caption>
+                  <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Packet ID</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Patient</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">High-Level Status</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Current Phase Age</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Intake Time</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Clinical Time</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Delivery Time</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Total Age</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">SLA Status</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {filteredPackets.sort((a, b) => b.currentAge - a.currentAge).map((packet) => (
+                        <tr key={packet.id} className={`hover:bg-gray-50 ${packet.overSla ? 'bg-red-50' : ''}`}>
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-blue-600">{packet.id}</div>
+                            {packet.priority === 'Expedited' && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-orange-100 text-orange-800">
+                                ⚡ Expedited
+                              </span>
+                            )}
+                            {packet.priority === 'High' && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-red-100 text-red-800">
+                                High
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{packet.patient}</div>
+                            <div className="text-xs text-gray-700">{packet.provider}</div>
+                          </td>
+                          <td className="px-4 py-4">
+                            <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-semibold border ${
+                              packet.highLevelStatus === 'Intake Processing' ? 'bg-amber-100 text-amber-800 border-amber-300' :
+                              packet.highLevelStatus === 'Clinical Review' ? 'bg-purple-100 text-purple-800 border-purple-300' :
+                              packet.highLevelStatus === 'Delivery In Progress' ? 'bg-orange-100 text-orange-800 border-orange-300' :
+                              'bg-green-100 text-green-800 border-green-300'
+                            }`}>
+                              {packet.highLevelStatus}
+                            </span>
+                            <div className="text-xs text-gray-600 mt-1">
+                              {packet.highLevelStatus === 'Intake Processing' && packet.intakeStatus}
+                              {packet.highLevelStatus === 'Clinical Review' && packet.clinicalStatus}
+                              {packet.highLevelStatus === 'Delivery In Progress' && packet.deliveryStatus}
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <div className={`text-sm font-bold ${
+                              packet.highLevelStatus === 'Intake Processing' && packet.intakeAge > 2 ? 'text-red-600' :
+                              packet.highLevelStatus === 'Clinical Review' && packet.clinicalAge > 3 ? 'text-red-600' :
+                              packet.highLevelStatus === 'Delivery In Progress' && packet.deliveryAge > 0.5 ? 'text-red-600' :
+                              'text-gray-900'
+                            }`}>
+                              {packet.highLevelStatus === 'Intake Processing' && formatDays(packet.intakeAge)}
+                              {packet.highLevelStatus === 'Clinical Review' && formatDays(packet.clinicalAge)}
+                              {packet.highLevelStatus === 'Delivery In Progress' && formatDays(packet.deliveryAge)}
+                              {packet.highLevelStatus.startsWith('Closed') && '-'}
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {formatDays(packet.intakeAge)}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {formatDays(packet.clinicalAge)}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {formatDays(packet.deliveryAge)}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            <div className="text-sm font-semibold text-gray-900">{formatDays(packet.currentAge)}</div>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap">
+                            {packet.overSla ? (
+                              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800 border border-red-300">
+                                ⚠️ Over SLA
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800 border border-green-300">
+                                ✓ Within SLA
+                              </span>
+                            )}
+                            <div className="text-xs text-gray-700 mt-1">Target: {formatDays(packet.slaTarget)}</div>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm">
+                            <a 
+                              href={`FINAL_packet_detail_view.html?id=${packet.id}`}
+                              className="text-blue-600 hover:text-blue-900 font-medium"
+                            >
+                              View
+                            </a>
+                            {packet.intakeStatus === 'Manual Review' && (
+                              <a 
+                                href={`FINAL_manual_review.html?id=${packet.id}`}
+                                className="ml-2 text-amber-600 hover:text-amber-900 font-semibold"
+                              >
+                                Review
+                              </a>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {filteredPackets.length === 0 && (
+                  <div className="text-center py-12 text-gray-700">
+                    No cases found in this phase
+                  </div>
+                )}
+              </div>
+
+              {/* API Health Monitoring */}
+              <div className="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 className="text-lg font-bold text-gray-900 mb-4">🔧 API Health Monitoring</h2>
+                <p className="text-sm text-gray-600 mb-4">Real-time status of external APIs used for validation and eligibility checks</p>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="border rounded-lg p-4 bg-green-50 border-green-300">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-lg font-bold text-gray-900">HETS</span>
+                      <span className="px-3 py-1 rounded text-xs font-semibold bg-green-500 text-white">
+                        ✓ Operational
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-sm">
+                      <div>
+                        <div className="text-gray-700">Uptime</div>
+                        <div className="font-semibold text-gray-900">99.8%</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-700">Avg Response</div>
+                        <div className="font-semibold text-gray-900">2.1s</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-700">Last Check</div>
+                        <div className="font-semibold text-gray-900">2 min ago</div>
+                      </div>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
+                      <div className="bg-green-500 h-2 rounded-full" style={{ width: '99.8%' }} />
+                    </div>
+                  </div>
+
+                  <div className="border rounded-lg p-4 bg-amber-50 border-amber-300">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-lg font-bold text-gray-900">PECOS</span>
+                      <span className="px-3 py-1 rounded text-xs font-semibold bg-amber-500 text-white">
+                        ⚠️ Degraded
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-sm">
+                      <div>
+                        <div className="text-gray-700">Uptime</div>
+                        <div className="font-semibold text-gray-900">95.2%</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-700">Avg Response</div>
+                        <div className="font-semibold text-red-600">4.5s</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-700">Last Check</div>
+                        <div className="font-semibold text-gray-900">1 min ago</div>
+                      </div>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
+                      <div className="bg-amber-500 h-2 rounded-full" style={{ width: '95.2%' }} />
+                    </div>
+                  </div>
+
+                  <div className="border rounded-lg p-4 bg-green-50 border-green-300">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-lg font-bold text-gray-900">OIG</span>
+                      <span className="px-3 py-1 rounded text-xs font-semibold bg-green-500 text-white">
+                        ✓ Operational
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-sm">
+                      <div>
+                        <div className="text-gray-700">Uptime</div>
+                        <div className="font-semibold text-gray-900">99.9%</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-700">Avg Response</div>
+                        <div className="font-semibold text-gray-900">0.8s</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-700">Last Check</div>
+                        <div className="font-semibold text-gray-900">3 min ago</div>
+                      </div>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
+                      <div className="bg-green-500 h-2 rounded-full" style={{ width: '99.9%' }} />
+                    </div>
+                  </div>
+
+                  <div className="border rounded-lg p-4 bg-green-50 border-green-300">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-lg font-bold text-gray-900">NPI</span>
+                      <span className="px-3 py-1 rounded text-xs font-semibold bg-green-500 text-white">
+                        ✓ Operational
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-sm">
+                      <div>
+                        <div className="text-gray-700">Uptime</div>
+                        <div className="font-semibold text-gray-900">100%</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-700">Avg Response</div>
+                        <div className="font-semibold text-gray-900">0.4s</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-700">Last Check</div>
+                        <div className="font-semibold text-gray-900">1 min ago</div>
+                      </div>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
+                      <div className="bg-green-500 h-2 rounded-full" style={{ width: '100%' }} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded">
+                  <p className="text-sm text-amber-800">
+                    <strong>⚠️ Alert:</strong> PECOS API showing degraded performance (4.5s avg response time vs normal 2s). May cause delays in provider validation.
+                  </p>
+                </div>
+              </div>
+
+              {/* Back Navigation */}
+              <div className="mt-6 flex justify-between items-center">
+                <a 
+                  href="FINAL_packets_dashboard.html"
+                  className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  <span>←</span> Back to Main Dashboard
+                </a>
+                <a 
+                  href="FINAL_analytics_insights_dashboard.html"
+                  className="inline-flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-medium"
+                >
+                  Switch to Analytics & Insights Dashboard <span>→</span>
+                </a>
+              </div>
+            </div>
+          );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<AnalyticsDashboard />);
+    </script>
+</body>
+</html>
