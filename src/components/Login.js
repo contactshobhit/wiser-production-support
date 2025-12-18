@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context';
 
+// Available mock users for quick login
+const availableUsers = [
+  { username: 'admin', password: 'adminpass', role: 'Admin' },
+  { username: 'reviewer1', password: 'reviewer1pass', role: 'Reviewer' },
+  { username: 'coordinator1', password: 'coordinator1pass', role: 'Coordinator' },
+  { username: 'guest1', password: 'guest1pass', role: 'Guest' },
+];
+
 export default function Login() {
   const { login, loading, error } = useAuth();
   const [username, setUsername] = useState('');
@@ -17,6 +25,17 @@ export default function Login() {
     }
 
     const result = await login(username, password);
+    if (!result.success) {
+      setLocalError(result.error || 'Login failed');
+    }
+  };
+
+  const handleQuickLogin = async (user) => {
+    setUsername(user.username);
+    setPassword(user.password);
+    setLocalError('');
+
+    const result = await login(user.username, user.password);
     if (!result.success) {
       setLocalError(result.error || 'Login failed');
     }
@@ -41,17 +60,19 @@ export default function Login() {
         <h1 style={{
           margin: '0 0 8px 0',
           fontSize: 24,
-          fontWeight: 600,
+          fontWeight: 700,
           color: '#1a1a2e',
+          textAlign: 'center',
         }}>
-          WISeR Production Support
+          WISeR Dashboard
         </h1>
         <p style={{
           margin: '0 0 24px 0',
           color: '#666',
           fontSize: 14,
+          textAlign: 'center',
         }}>
-          Sign in to access the dashboard
+          Sign in to your account
         </p>
 
         <form onSubmit={handleSubmit}>
@@ -144,19 +165,49 @@ export default function Login() {
           </button>
         </form>
 
+        {/* Quick login buttons for development */}
         <div style={{
           marginTop: 24,
-          padding: 16,
-          background: '#f8fafc',
-          borderRadius: 6,
-          fontSize: 13,
-          color: '#64748b',
+          paddingTop: 24,
+          borderTop: '1px solid #e2e8f0',
         }}>
-          <strong>Test Accounts:</strong>
-          <div style={{ marginTop: 8 }}>
-            <div>admin / adminpass (Full access)</div>
-            <div>reviewer1 / reviewer1pass (Reviewer)</div>
-            <div>coordinator1 / coordinator1pass (Coordinator)</div>
+          <p style={{
+            fontSize: 14,
+            color: '#64748b',
+            marginBottom: 12,
+            textAlign: 'center',
+          }}>
+            Quick login (Dev only)
+          </p>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 8,
+          }}>
+            {availableUsers.map((user) => (
+              <button
+                key={user.username}
+                type="button"
+                onClick={() => handleQuickLogin(user)}
+                disabled={loading}
+                style={{
+                  padding: '10px 12px',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: '#374151',
+                  background: '#f3f4f6',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 6,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.5 : 1,
+                  transition: 'background 0.2s',
+                }}
+                onMouseOver={(e) => !loading && (e.target.style.background = '#e5e7eb')}
+                onMouseOut={(e) => (e.target.style.background = '#f3f4f6')}
+              >
+                {user.role}
+              </button>
+            ))}
           </div>
         </div>
       </div>
